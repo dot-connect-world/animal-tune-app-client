@@ -18,8 +18,7 @@
         {
           "microphonePermission": "Allow Animal Tune to access your microphone for guitar tuning."
         }
-      ],
-      "react-native-reanimated/plugin"
+      ]
     ],
     "ios": {
       "supportsTablet": true,
