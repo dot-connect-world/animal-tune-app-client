@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "animal-tune-temp",
-    "slug": "animal-tune-temp",
+    "name": "Animal Tune",
+    "slug": "animal-tune",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,14 +12,28 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Animal Tune to access your microphone for guitar tuning."
+        }
+      ],
+      "react-native-reanimated/plugin"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.animaltune.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.animaltune.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
