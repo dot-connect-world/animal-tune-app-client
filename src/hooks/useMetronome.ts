@@ -20,7 +20,8 @@ export function useMetronome(): UseMetronomeReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
 
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const normalSoundRef = useRef<Audio.Sound | null>(null); // 일반 박자 (click.mp3)
+  const accentSoundRef = useRef<Audio.Sound | null>(null); // 첫 박자 (metronome-wood.mp3)
   const bpmRef = useRef<number>(120);
   const isPlayingRef = useRef<boolean>(false);
 
@@ -53,7 +54,7 @@ export function useMetronome(): UseMetronomeReturn {
 
   // 사운드 로드
   const loadSound = useCallback(async () => {
-    if (soundRef.current) return;
+    if (normalSoundRef.current && accentSoundRef.current) return;
 
     try {
       // 오디오 모드 설정 (안드로이드에서도 작동하도록)
@@ -64,45 +65,60 @@ export function useMetronome(): UseMetronomeReturn {
         playThroughEarpieceAndroid: false,
       });
 
-      // 로컬 클릭 사운드 파일 사용 (MP3 형식)
-      const { sound } = await Audio.Sound.createAsync(
+      // 일반 박자 사운드 (rate 1.0)
+      const { sound: normalSound } = await Audio.Sound.createAsync(
         require('../../assets/sounds/click.mp3'),
         {
           shouldPlay: false,
           volume: 1.0,
+          rate: 1.0,
+          shouldCorrectPitch: true,
         }
       );
+      await normalSound.setRateAsync(1.0, true); // rate 고정
+      normalSoundRef.current = normalSound;
 
-      // 사운드 로드 완료 대기
-      await sound.setVolumeAsync(1.0);
-      soundRef.current = sound;
-      console.log('메트로놈 사운드 로드 완료');
+      // 첫 박자 사운드 (편집된 우드블록 - 짧은 딸깍)
+      const { sound: accentSound } = await Audio.Sound.createAsync(
+        require('../../assets/sounds/metronome-wood.mp3'),
+        {
+          shouldPlay: false,
+          volume: 1.0, // 풀 볼륨
+        }
+      );
+      accentSoundRef.current = accentSound;
+
+      console.log('메트로놈 사운드 로드 완료 (2개 인스턴스)');
     } catch (error) {
       console.error('사운드 로드 실패:', error);
     }
   }, []);
 
   // 사운드 재생 (비차단 방식)
-  const playSound = useCallback(() => {
-    if (!soundRef.current) return;
+  const playSound = useCallback((isAccent: boolean = false) => {
+    // 적절한 사운드 인스턴스 선택
+    const targetSound = isAccent ? accentSoundRef.current : normalSoundRef.current;
+
+    if (!targetSound) return;
 
     // 비동기 작업을 비차단 방식으로 실행 (타이밍 정확도 유지)
     (async () => {
       try {
         // 사운드 상태 확인
-        const status = await soundRef.current!.getStatusAsync();
+        const status = await targetSound.getStatusAsync();
 
         if (!status.isLoaded) {
           console.warn('사운드가 아직 로드되지 않았습니다.');
           return;
         }
 
-        // 재생 중이면 위치만 리셋, 아니면 재생 시작
+        // 재생 중이면 중지
         if (status.isPlaying) {
-          await soundRef.current!.stopAsync();
+          await targetSound.stopAsync();
         }
-        await soundRef.current!.setPositionAsync(0);
-        await soundRef.current!.playAsync();
+
+        await targetSound.setPositionAsync(0);
+        await targetSound.playAsync();
       } catch (error) {
         console.error('사운드 재생 실패:', error);
       }
@@ -121,12 +137,14 @@ export function useMetronome(): UseMetronomeReturn {
       const beatTime = nextBeatTimeRef.current;
       const currentBeatNumber = (beatCountRef.current % 4) + 1;
       const delay = Math.max(0, beatTime - now);
+      const isFirstBeat = currentBeatNumber === 1; // 첫 번째 박자 여부
 
       // 박자 예약
       const timer = setTimeout(() => {
         if (!isPlayingRef.current) return;
 
-        playSound();
+        // 첫 번째 박자는 강조
+        playSound(isFirstBeat);
         setCurrentBeat(currentBeatNumber as 1 | 2 | 3 | 4);
 
         // 타이머 세트에서 제거
@@ -185,8 +203,11 @@ export function useMetronome(): UseMetronomeReturn {
   useEffect(() => {
     return () => {
       stop();
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
+      if (normalSoundRef.current) {
+        normalSoundRef.current.unloadAsync();
+      }
+      if (accentSoundRef.current) {
+        accentSoundRef.current.unloadAsync();
       }
     };
   }, []);
