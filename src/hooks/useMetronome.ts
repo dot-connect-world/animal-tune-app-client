@@ -20,15 +20,25 @@ export function useMetronome(): UseMetronomeReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const bpmRef = useRef<number>(120);
+  const isPlayingRef = useRef<boolean>(false);
+
+  // Look-Ahead 스케줄러
+  const schedulerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const nextBeatTimeRef = useRef<number>(0);
-  const audioContextRef = useRef<any>(null);
+  const beatCountRef = useRef<number>(0);
+  const scheduledTimersRef = useRef<Set<NodeJS.Timeout>>(new Set());
+
+  // Look-Ahead 설정
+  const SCHEDULE_AHEAD_TIME = 100; // 100ms 미리 예약
+  const SCHEDULER_INTERVAL = 25; // 25ms마다 체크
 
   // BPM 설정 (범위 체크)
   const setBpm = useCallback((newBpm: number) => {
     const clampedBpm = Math.max(MIN_BPM, Math.min(MAX_BPM, newBpm));
     setBpmState(clampedBpm);
+    bpmRef.current = clampedBpm;
   }, []);
 
   // BPM 증가
@@ -46,86 +56,130 @@ export function useMetronome(): UseMetronomeReturn {
     if (soundRef.current) return;
 
     try {
-      // 오디오 모드 설정
+      // 오디오 모드 설정 (안드로이드에서도 작동하도록)
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
       });
 
-      // 간단한 클릭 사운드 생성 (실제로는 클릭 사운드 파일 사용 권장)
-      // 임시로 expo-av의 기본 사운드 사용
+      // 로컬 클릭 사운드 파일 사용 (MP3 형식)
       const { sound } = await Audio.Sound.createAsync(
-        // 짧은 beep 사운드 URI (실제로는 assets/sounds/click.wav 사용)
-        { uri: 'https://www.soundjay.com/mechanical/sounds/click-1.mp3' },
-        { shouldPlay: false }
+        require('../../assets/sounds/click.mp3'),
+        {
+          shouldPlay: false,
+          volume: 1.0,
+        }
       );
 
+      // 사운드 로드 완료 대기
+      await sound.setVolumeAsync(1.0);
       soundRef.current = sound;
+      console.log('메트로놈 사운드 로드 완료');
     } catch (error) {
       console.error('사운드 로드 실패:', error);
     }
   }, []);
 
+  // 사운드 재생 (비차단 방식)
+  const playSound = useCallback(() => {
+    if (!soundRef.current) return;
+
+    // 비동기 작업을 비차단 방식으로 실행 (타이밍 정확도 유지)
+    (async () => {
+      try {
+        // 사운드 상태 확인
+        const status = await soundRef.current!.getStatusAsync();
+
+        if (!status.isLoaded) {
+          console.warn('사운드가 아직 로드되지 않았습니다.');
+          return;
+        }
+
+        // 재생 중이면 위치만 리셋, 아니면 재생 시작
+        if (status.isPlaying) {
+          await soundRef.current!.stopAsync();
+        }
+        await soundRef.current!.setPositionAsync(0);
+        await soundRef.current!.playAsync();
+      } catch (error) {
+        console.error('사운드 재생 실패:', error);
+      }
+    })();
+  }, []);
+
+  // Look-Ahead 스케줄러: 미리 여러 박자를 예약
+  const scheduler = useCallback(() => {
+    if (!isPlayingRef.current) return;
+
+    const now = Date.now();
+    const beatDuration = (60 / bpmRef.current) * 1000;
+
+    // 현재 시간 + 100ms 안에 재생할 박자들을 모두 예약
+    while (nextBeatTimeRef.current < now + SCHEDULE_AHEAD_TIME) {
+      const beatTime = nextBeatTimeRef.current;
+      const currentBeatNumber = (beatCountRef.current % 4) + 1;
+      const delay = Math.max(0, beatTime - now);
+
+      // 박자 예약
+      const timer = setTimeout(() => {
+        if (!isPlayingRef.current) return;
+
+        playSound();
+        setCurrentBeat(currentBeatNumber as 1 | 2 | 3 | 4);
+
+        // 타이머 세트에서 제거
+        scheduledTimersRef.current.delete(timer);
+      }, delay);
+
+      // 예약된 타이머 추적
+      scheduledTimersRef.current.add(timer);
+
+      // 다음 박자 시간 계산
+      nextBeatTimeRef.current += beatDuration;
+      beatCountRef.current++;
+    }
+  }, [playSound]);
+
   // 메트로놈 시작
   const start = useCallback(async () => {
-    if (isPlaying) return;
+    if (isPlayingRef.current) return;
 
     await loadSound();
 
+    isPlayingRef.current = true;
     setIsPlaying(true);
-    setCurrentBeat(0);
 
-    // 정확한 타이밍을 위해 초기 시간 설정
+    // 초기화
     nextBeatTimeRef.current = Date.now();
+    beatCountRef.current = 0;
 
-    // 메트로놈 루프
-    const tick = async () => {
-      if (!isPlaying) return;
+    // 첫 스케줄링 실행 (즉시 여러 박자 예약)
+    scheduler();
 
-      const now = Date.now();
-      const intervalMs = (60 / bpm) * 1000;
-
-      // 다음 비트 시간이 되었는지 확인
-      if (now >= nextBeatTimeRef.current) {
-        // 사운드 재생
-        if (soundRef.current) {
-          try {
-            await soundRef.current.replayAsync();
-          } catch (error) {
-            console.error('사운드 재생 실패:', error);
-          }
-        }
-
-        // 비트 카운터 증가 (1-4 순환)
-        setCurrentBeat((prev) => (prev % 4) + 1);
-
-        // 다음 비트 시간 계산 (누적 오차 보정)
-        nextBeatTimeRef.current += intervalMs;
-      }
-    };
-
-    // 짧은 간격으로 체크 (정확도 향상)
-    intervalRef.current = setInterval(tick, 10);
-  }, [isPlaying, bpm, loadSound]);
+    // 25ms마다 스케줄러 실행하여 계속 박자 추가
+    schedulerIntervalRef.current = setInterval(scheduler, SCHEDULER_INTERVAL);
+  }, [loadSound, scheduler]);
 
   // 메트로놈 중지
   const stop = useCallback(() => {
+    isPlayingRef.current = false;
     setIsPlaying(false);
     setCurrentBeat(0);
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    // 스케줄러 중지
+    if (schedulerIntervalRef.current) {
+      clearInterval(schedulerIntervalRef.current);
+      schedulerIntervalRef.current = null;
     }
-  }, []);
 
-  // BPM 변경 시 재시작
-  useEffect(() => {
-    if (isPlaying) {
-      stop();
-      start();
-    }
-  }, [bpm]);
+    // 예약된 모든 타이머 취소
+    scheduledTimersRef.current.forEach((timer) => {
+      clearTimeout(timer);
+    });
+    scheduledTimersRef.current.clear();
+  }, []);
 
   // 클린업
   useEffect(() => {
