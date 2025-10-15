@@ -1,0 +1,31 @@
+{
+  "name": "expo-precise-metronome",
+  "version": "1.0.0",
+  "description": "High-precision native metronome module for Expo",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "expo-module build"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "metronome",
+    "native"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/expo-precise-metronome.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/expo-precise-metronome/issues"
+  },
+  "author": "Animal Tune",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/expo-precise-metronome#readme",
+  "devDependencies": {
+    "expo-module-scripts": "^3.0.0"
+  },
+  "peerDependencies": {
+    "expo": "*"
+  }
+}

@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { useMetronome } from '../hooks/useMetronome';
+import { useNativeMetronome } from '../hooks/useNativeMetronome';
 import TempoControl from '../components/metronome/TempoControl';
 import BeatVisualizer from '../components/metronome/BeatVisualizer';
 
@@ -20,13 +20,13 @@ export default function MetronomeScreen() {
     stop,
     increaseBpm,
     decreaseBpm,
-  } = useMetronome();
+  } = useNativeMetronome();
 
-  const handleToggle = async () => {
+  const handleToggle = () => {
     if (isPlaying) {
       stop();
     } else {
-      await start();
+      start();
     }
   };
 

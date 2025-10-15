@@ -18,7 +18,8 @@
         {
           "microphonePermission": "Allow Animal Tune to access your microphone for guitar tuning."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,
@@ -30,7 +31,8 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.animaltune.app",
       "edgeToEdgeEnabled": true,
@@ -38,6 +40,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5d73d682-c7d6-40d7-b226-0d84f30ff2a6"
+      }
     }
   }
 }

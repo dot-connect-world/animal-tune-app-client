@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
+import Pitchy, { PitchyConfig, PitchyEventCallback } from 'react-native-pitchy';
 import { getClosestNote, Note } from '../constants/notes';
 
 interface PitchData {
@@ -30,7 +31,14 @@ export function usePitchDetector(): UsePitchDetectorReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const subscriptionRef = useRef<{ remove: () => void } | null>(null);
+  const isInitializedRef = useRef(false);
+
+  // 안정화를 위한 상태
+  const frequencyBufferRef = useRef<number[]>([]); // 초기 1초 동안의 주파수 저장
+  const startTimeRef = useRef<number>(0); // 녹음 시작 시간
+  const STABILIZATION_TIME = 1000; // 1초 동안 안정화
+  const SMOOTHING_FACTOR = 0.3; // 스무딩 강도 (0~1, 낮을수록 부드러움)
 
   // 권한 요청
   const requestPermission = useCallback(async () => {
@@ -50,6 +58,38 @@ export function usePitchDetector(): UsePitchDetectorReturn {
     requestPermission();
   }, [requestPermission]);
 
+  // Pitchy 초기화 (권한 획득 후)
+  useEffect(() => {
+    const initPitchy = async () => {
+      if (hasPermission && !isInitializedRef.current) {
+        try {
+          // Pitchy 초기화 (최적화된 설정)
+          const config: PitchyConfig = {
+            bufferSize: 4096, // 더 큰 버퍼로 정확도 향상
+            minVolume: -50,   // 최소 볼륨 임계값 (dB)
+          };
+
+          await Pitchy.init(config);
+          isInitializedRef.current = true;
+          console.log('Pitchy 초기화 완료');
+        } catch (err) {
+          console.error('Pitchy 초기화 실패:', err);
+          setError('피치 감지 초기화 실패: ' + (err as Error).message);
+        }
+      }
+    };
+
+    initPitchy();
+
+    // 클린업
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
+      }
+    };
+  }, [hasPermission]);
+
   // Pitch detection 시작
   const start = useCallback(async () => {
     try {
@@ -58,7 +98,16 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         return;
       }
 
+      if (!isInitializedRef.current) {
+        setError('피치 감지가 아직 초기화되지 않았습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+
       setError(null);
+
+      // 안정화 상태 초기화
+      frequencyBufferRef.current = [];
+      startTimeRef.current = Date.now();
 
       // 오디오 모드 설정
       await Audio.setAudioModeAsync({
@@ -66,31 +115,94 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         playsInSilentModeIOS: true,
       });
 
-      // 녹음 시작 (임시 구현 - react-native-pitchy로 교체 예정)
-      // react-native-pitchy는 네이티브 빌드 후 사용 가능
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      // 이전 주파수 저장 (스무딩용)
+      let lastFrequency: number | null = null;
 
-      setRecording(newRecording);
+      // Pitchy 리스너 설정 (안정화 로직 포함)
+      const handlePitch: PitchyEventCallback = (data) => {
+        // 디버깅: 실제 데이터 구조 확인
+        if (__DEV__) {
+          console.log('Pitchy data:', JSON.stringify(data, null, 2));
+        }
+
+        if (data.pitch && data.pitch > 0) {
+          const rawFrequency = data.pitch;
+
+          // 기타 주파수 범위 확인 (82Hz ~ 1046Hz: E2 ~ C6)
+          if (rawFrequency < 60 || rawFrequency > 1200) {
+            console.warn('주파수가 기타 범위를 벗어남:', rawFrequency);
+            return;
+          }
+
+          const now = Date.now();
+          const elapsedTime = now - startTimeRef.current;
+
+          let frequency: number;
+
+          // 1단계: 초기 1초 동안 평균 계산
+          if (elapsedTime < STABILIZATION_TIME) {
+            frequencyBufferRef.current.push(rawFrequency);
+
+            // 현재까지의 평균 표시
+            const sum = frequencyBufferRef.current.reduce((acc, f) => acc + f, 0);
+            frequency = sum / frequencyBufferRef.current.length;
+
+            if (__DEV__) {
+              console.log(`안정화 중... (${frequencyBufferRef.current.length}개 샘플, 평균: ${frequency.toFixed(2)}Hz)`);
+            }
+          }
+          // 2단계: 1초 이후 스무딩 적용
+          else {
+            if (lastFrequency === null) {
+              // 안정화 완료 후 첫 값
+              frequency = rawFrequency;
+            } else {
+              // 지수 이동 평균 (Exponential Moving Average)
+              frequency = lastFrequency * (1 - SMOOTHING_FACTOR) + rawFrequency * SMOOTHING_FACTOR;
+            }
+            lastFrequency = frequency;
+          }
+
+          const { note, cents } = getClosestNote(frequency);
+
+          setPitchData({
+            frequency,
+            note,
+            cents,
+            clarity: 0.9, // Pitchy는 clarity 제공하지 않음
+          });
+        }
+      };
+
+      // 리스너 등록
+      subscriptionRef.current = Pitchy.addListener(handlePitch);
+
+      // Pitchy 시작
+      await Pitchy.start();
       setIsRecording(true);
 
-      // TODO: react-native-pitchy 통합
-      // 현재는 임시로 랜덤 데이터 생성 (테스트용)
-      simulatePitchDetection();
-
     } catch (err) {
-      setError('녹음 시작 실패: ' + (err as Error).message);
+      setError('피치 감지 시작 실패: ' + (err as Error).message);
       setIsRecording(false);
+
+      // 에러 발생 시 리스너 정리
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
+      }
     }
   }, [hasPermission, requestPermission]);
 
   // Pitch detection 중지
   const stop = useCallback(async () => {
     try {
-      if (recording) {
-        await recording.stopAndUnloadAsync();
-        setRecording(null);
+      // Pitchy 중지
+      await Pitchy.stop();
+
+      // 리스너 제거
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
       }
 
       await Audio.setAudioModeAsync({
@@ -98,6 +210,10 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       });
 
       setIsRecording(false);
+
+      // 안정화 버퍼 초기화
+      frequencyBufferRef.current = [];
+
       setPitchData({
         frequency: null,
         note: null,
@@ -105,32 +221,9 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         clarity: null,
       });
     } catch (err) {
-      setError('녹음 중지 실패: ' + (err as Error).message);
+      setError('피치 감지 중지 실패: ' + (err as Error).message);
     }
-  }, [recording]);
-
-  // 임시 시뮬레이션 (개발 빌드 후 react-native-pitchy로 교체)
-  const simulatePitchDetection = () => {
-    const interval = setInterval(() => {
-      // 기타 E2 (82.41Hz) 주변 주파수 시뮬레이션
-      const baseFreq = 82.41;
-      const randomOffset = (Math.random() - 0.5) * 5; // ±2.5Hz
-      const frequency = baseFreq + randomOffset;
-
-      const { note, cents } = getClosestNote(frequency);
-      const clarity = 0.8 + Math.random() * 0.2; // 0.8~1.0
-
-      setPitchData({
-        frequency,
-        note,
-        cents,
-        clarity,
-      });
-    }, 100);
-
-    // 컴포넌트 언마운트 시 정리
-    return () => clearInterval(interval);
-  };
+  }, []);
 
   return {
     pitchData,

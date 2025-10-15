@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["PreciseMetronomeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.precisemetronome.PreciseMetronomeModule"]
+  }
+}
