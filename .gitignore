@@ -39,6 +39,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+modules/**/android/build/
+modules/**/android/.gradle/
+modules/**/android/.cxx/
+modules/**/ios/build/
+modules/**/ios/Pods/
+
+# BUT keep expo module native folders
+!/modules/**/ios
+!/modules/**/android
 
 # mcp
 .serena/
