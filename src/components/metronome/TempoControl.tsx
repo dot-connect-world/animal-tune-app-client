@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { RFValue, RWValue, RHValue } from '../../utils/responsive';
 
 interface TempoControlProps {
   bpm: number;
@@ -29,36 +30,41 @@ export default function TempoControl({
 
   return (
     <View style={styles.container}>
-      {/* BPM 표시 */}
+      {/* BPM 표시 (통합) */}
       <View style={styles.bpmDisplay}>
-        <Text style={styles.bpmLabel}>템포</Text>
         <Text style={styles.bpmValue}>{bpm}</Text>
         <Text style={styles.bpmUnit}>BPM</Text>
       </View>
 
-      {/* 템포 설명 */}
-      <Text style={styles.tempoDescription}>{getTempoDescription(bpm)}</Text>
-
-      {/* 버튼 컨트롤 */}
-      <View style={styles.buttonContainer}>
+      {/* 빠른 선택 버튼 (상단으로 이동) */}
+      <View style={styles.presetContainer}>
         <TouchableOpacity
-          style={[styles.button, disabled && styles.buttonDisabled]}
-          onPress={onDecrease}
-          disabled={disabled || bpm <= 40}
+          style={[styles.presetButton, bpm === 60 && styles.presetButtonActive]}
+          onPress={() => onBpmChange(60)}
+          disabled={disabled}
         >
-          <Text style={styles.buttonText}>-</Text>
+          <Text style={[styles.presetText, bpm === 60 && styles.presetTextActive]}>60</Text>
         </TouchableOpacity>
-
-        <View style={styles.bpmValueContainer}>
-          <Text style={styles.bpmMainValue}>{bpm}</Text>
-        </View>
-
         <TouchableOpacity
-          style={[styles.button, disabled && styles.buttonDisabled]}
-          onPress={onIncrease}
-          disabled={disabled || bpm >= 240}
+          style={[styles.presetButton, bpm === 90 && styles.presetButtonActive]}
+          onPress={() => onBpmChange(90)}
+          disabled={disabled}
         >
-          <Text style={styles.buttonText}>+</Text>
+          <Text style={[styles.presetText, bpm === 90 && styles.presetTextActive]}>90</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.presetButton, bpm === 120 && styles.presetButtonActive]}
+          onPress={() => onBpmChange(120)}
+          disabled={disabled}
+        >
+          <Text style={[styles.presetText, bpm === 120 && styles.presetTextActive]}>120</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.presetButton, bpm === 180 && styles.presetButtonActive]}
+          onPress={() => onBpmChange(180)}
+          disabled={disabled}
+        >
+          <Text style={[styles.presetText, bpm === 180 && styles.presetTextActive]}>180</Text>
         </TouchableOpacity>
       </View>
 
@@ -80,35 +86,22 @@ export default function TempoControl({
         <Text style={styles.sliderLabel}>240</Text>
       </View>
 
-      {/* 빠른 선택 버튼 */}
-      <View style={styles.presetContainer}>
+      {/* 버튼 컨트롤 */}
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => onBpmChange(60)}
-          disabled={disabled}
+          style={[styles.button, disabled && styles.buttonDisabled]}
+          onPress={onDecrease}
+          disabled={disabled || bpm <= 40}
         >
-          <Text style={styles.presetText}>60</Text>
+          <Text style={styles.buttonText}>-</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => onBpmChange(90)}
-          disabled={disabled}
+          style={[styles.button, disabled && styles.buttonDisabled]}
+          onPress={onIncrease}
+          disabled={disabled || bpm >= 240}
         >
-          <Text style={styles.presetText}>90</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => onBpmChange(120)}
-          disabled={disabled}
-        >
-          <Text style={styles.presetText}>120</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => onBpmChange(180)}
-          disabled={disabled}
-        >
-          <Text style={styles.presetText}>180</Text>
+          <Text style={styles.buttonText}>+</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -118,10 +111,10 @@ export default function TempoControl({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: RWValue(20),
+    paddingVertical: RHValue(20),
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: RWValue(16),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -132,43 +125,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginBottom: 8,
-  },
-  bpmLabel: {
-    fontSize: 18,
-    color: '#666',
-    marginRight: 12,
-    fontWeight: '500',
+    marginBottom: RHValue(24),
   },
   bpmValue: {
-    fontSize: 64,
+    fontSize: RFValue(72),
     fontWeight: 'bold',
     color: '#007AFF',
     letterSpacing: -2,
   },
   bpmUnit: {
-    fontSize: 20,
+    fontSize: RFValue(24),
     color: '#999',
-    marginLeft: 8,
+    marginLeft: RWValue(8),
     fontWeight: '600',
-  },
-  tempoDescription: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
-    fontWeight: '500',
   },
   buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    gap: RWValue(20),
+    marginTop: RHValue(16),
   },
   button: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: RWValue(60),
+    height: RWValue(60),
+    borderRadius: RWValue(30),
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -183,51 +164,50 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: 32,
+    fontSize: RFValue(36),
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  bpmValueContainer: {
-    marginHorizontal: 32,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  bpmMainValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#333',
   },
   sliderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: RHValue(20),
   },
   slider: {
     flex: 1,
-    height: 40,
-    marginHorizontal: 12,
+    height: RHValue(40),
+    marginHorizontal: RWValue(12),
   },
   sliderLabel: {
-    fontSize: 14,
+    fontSize: RFValue(14),
     color: '#999',
     fontWeight: '600',
   },
   presetContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginBottom: RHValue(24),
   },
   presetButton: {
     flex: 1,
-    paddingVertical: 12,
-    marginHorizontal: 4,
+    paddingVertical: RHValue(16),
+    marginHorizontal: RWValue(4),
     backgroundColor: '#F0F0F0',
-    borderRadius: 8,
+    borderRadius: RWValue(12),
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  presetButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
   },
   presetText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: RFValue(18),
+    fontWeight: '700',
     color: '#007AFF',
+  },
+  presetTextActive: {
+    color: '#FFFFFF',
   },
 });
