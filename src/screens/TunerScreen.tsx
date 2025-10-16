@@ -45,10 +45,7 @@ export default function TunerScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.title}>🎸 기타 튜너</Text>
-        <Text style={styles.subtitle}>
-          {isRecording ? '튜닝 중...' : '시작 버튼을 눌러주세요'}
-        </Text>
+        <Text style={styles.title}>Tuner</Text>
       </View>
 
       {/* 에러 메시지 */}
@@ -80,23 +77,17 @@ export default function TunerScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* 안내 텍스트 */}
-      <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>💡 사용 방법</Text>
-        <Text style={styles.infoText}>
-          1. 시작 버튼을 누르세요{'\n'}
-          2. 기타 줄을 튕기세요{'\n'}
-          3. 바늘이 중앙에 오도록 조율하세요{'\n'}
-          4. 초록색이 되면 완벽합니다!
-        </Text>
-      </View>
-
       {/* 디버그 정보 (개발용) */}
-      {__DEV__ && pitchData.clarity !== null && (
+      {__DEV__ && isRecording && (
         <View style={styles.debugBox}>
           <Text style={styles.debugText}>
-            Debug: Clarity {(pitchData.clarity * 100).toFixed(0)}%
+            Status: {pitchData.isStabilizing ? 'Stabilizing' : 'Active'}
           </Text>
+          {pitchData.frequency && (
+            <Text style={styles.debugText}>
+              Freq: {pitchData.frequency.toFixed(2)} Hz
+            </Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -122,11 +113,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
   },
   errorContainer: {
     backgroundColor: '#FFEBEE',
@@ -163,26 +149,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
-  },
-  infoBox: {
-    backgroundColor: '#FFF9E6',
-    padding: 20,
-    borderRadius: 12,
-    marginTop: 40,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#FFE082',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F57C00',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
   },
   debugBox: {
     marginTop: 20,

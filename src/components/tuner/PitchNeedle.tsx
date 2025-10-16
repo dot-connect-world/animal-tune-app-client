@@ -17,17 +17,35 @@ const MAX_CENTS = 50;
 
 export default function PitchNeedle({ cents }: PitchNeedleProps) {
   const needlePosition = useSharedValue(0);
+  const NEEDLE_DEAD_ZONE = 3; // ±3 cents 이하 변화는 무시 (바늘 미세 떨림 방지)
 
   useEffect(() => {
     if (cents !== null) {
       // cents를 -1 ~ 1 범위로 정규화
       const normalized = Math.max(-1, Math.min(1, cents / MAX_CENTS));
+
+      const currentNormalized = needlePosition.value;
+      const diff = Math.abs(normalized - currentNormalized);
+      const diffInCents = diff * MAX_CENTS;
+
+      // Dead zone: 3 cents 이하 변화는 무시 (미세한 떨림 방지)
+      if (diffInCents < NEEDLE_DEAD_ZONE) {
+        return;
+      }
+
+      // 스프링 애니메이션으로 부드럽게 이동
       needlePosition.value = withSpring(normalized, {
-        damping: 15,
-        stiffness: 150,
+        damping: 25,      // 적절한 댐핑 (너무 높으면 느림)
+        stiffness: 75,    // 적절한 강성 (너무 낮으면 느림)
+        mass: 0.8,        // 적절한 질량 (급격한 움직임 방지)
       });
     } else {
-      needlePosition.value = withSpring(0);
+      // 데이터 없을 때 중앙으로 복귀
+      needlePosition.value = withSpring(0, {
+        damping: 25,
+        stiffness: 75,
+        mass: 0.8,
+      });
     }
   }, [cents]);
 
@@ -44,22 +62,13 @@ export default function PitchNeedle({ cents }: PitchNeedleProps) {
     const absValue = Math.abs(needlePosition.value);
     const color = interpolateColor(
       absValue,
-      [0, 0.2, 1],
-      ['#4CAF50', '#FFC107', '#F44336'] // 초록 -> 노랑 -> 빨강
+      [0, 0.06, 0.2, 1], // 0 = 중앙, 0.06 = 3 cents, 0.2 = 10 cents, 1 = 50 cents
+      ['#4CAF50', '#4CAF50', '#FFC107', '#F44336'] // 초록(완벽) -> 초록 -> 노랑(거의) -> 빨강(조정필요)
     );
     return {
       backgroundColor: color,
     };
   });
-
-  const getAccuracyText = () => {
-    if (cents === null) return '대기 중...';
-    const absCents = Math.abs(cents);
-    if (absCents < 5) return '완벽! 🎉';
-    if (absCents < 10) return '거의 맞음 👍';
-    if (absCents < 20) return cents > 0 ? '조금 높음 ⬆️' : '조금 낮음 ⬇️';
-    return cents > 0 ? '너무 높음 ⬆️⬆️' : '너무 낮음 ⬇️⬇️';
-  };
 
   return (
     <View style={styles.container}>
@@ -79,16 +88,6 @@ export default function PitchNeedle({ cents }: PitchNeedleProps) {
         <Animated.View style={[styles.needleContainer, needleStyle]}>
           <Animated.View style={[styles.needle, colorStyle]} />
         </Animated.View>
-      </View>
-
-      {/* Cents 값 표시 */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.centsValue}>
-          {cents !== null ? `${cents > 0 ? '+' : ''}${cents.toFixed(0)} cents` : '-- cents'}
-        </Text>
-        <Text style={styles.accuracyText}>
-          {getAccuracyText()}
-        </Text>
       </View>
     </View>
   );
@@ -146,20 +145,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
-  },
-  infoContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  centsValue: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  accuracyText: {
-    fontSize: 18,
-    color: '#666',
-    fontWeight: '500',
   },
 });

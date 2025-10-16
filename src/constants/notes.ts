@@ -76,27 +76,79 @@ export const ALL_NOTES: Note[] = [
   { name: 'B', frequency: 987.77, octave: 5 },
 ];
 
-// 주파수를 가장 가까운 음계로 변환
-export function getClosestNote(frequency: number): {
-  note: Note;
-  cents: number; // -50 ~ +50 (음정 편차)
-} {
+// 현재 표시 중인 음정 (Dead Zone 적용용)
+let currentDisplayedNote: Note | null = null;
+
+// 주파수를 cents로 변환하는 헬퍼 함수
+function frequencyToCents(frequency: number, referenceFrequency: number): number {
+  return 1200 * Math.log2(frequency / referenceFrequency);
+}
+
+// 이진 탐색으로 가장 가까운 음정 찾기 (O(log n) 성능)
+function findClosestNoteByBinarySearch(frequency: number): Note {
+  let left = 0;
+  let right = ALL_NOTES.length - 1;
   let closestNote = ALL_NOTES[0];
   let minDiff = Math.abs(frequency - closestNote.frequency);
 
-  for (const note of ALL_NOTES) {
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const note = ALL_NOTES[mid];
     const diff = Math.abs(frequency - note.frequency);
+
     if (diff < minDiff) {
       minDiff = diff;
       closestNote = note;
     }
+
+    if (note.frequency < frequency) {
+      left = mid + 1;
+    } else if (note.frequency > frequency) {
+      right = mid - 1;
+    } else {
+      return note; // 정확히 일치
+    }
   }
 
-  // Cents 계산 (반음 = 100 cents)
-  const cents = 1200 * Math.log2(frequency / closestNote.frequency);
+  return closestNote;
+}
+
+// 주파수를 가장 가까운 음계로 변환 (Dead Zone 적용)
+export function getClosestNote(frequency: number): {
+  note: Note;
+  cents: number; // -50 ~ +50 (음정 편차)
+} {
+  const DEAD_ZONE_CENTS = 15; // ±15 cents 범위 내에서는 현재 음정 유지 (best practice)
+
+  // 1. 가장 가까운 음정 찾기 (이진 탐색으로 최적화)
+  let closestNote = findClosestNoteByBinarySearch(frequency);
+
+  // 2. Dead Zone 적용: 현재 표시 중인 음정이 있다면
+  if (currentDisplayedNote) {
+    const centsFromCurrent = frequencyToCents(frequency, currentDisplayedNote.frequency);
+
+    // 현재 음정에서 ±15 cents 이내면 현재 음정 유지
+    if (Math.abs(centsFromCurrent) <= DEAD_ZONE_CENTS) {
+      closestNote = currentDisplayedNote;
+    } else {
+      // Dead Zone을 벗어났으면 새 음정으로 업데이트
+      currentDisplayedNote = closestNote;
+    }
+  } else {
+    // 처음 실행시 현재 음정 설정
+    currentDisplayedNote = closestNote;
+  }
+
+  // 3. Cents 계산 (반음 = 100 cents)
+  const cents = frequencyToCents(frequency, closestNote.frequency);
 
   return {
     note: closestNote,
     cents: Math.round(cents),
   };
+}
+
+// 튜너 정지시 현재 음정 초기화
+export function resetCurrentNote(): void {
+  currentDisplayedNote = null;
 }
