@@ -35,7 +35,7 @@ export default function MetronomeScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         {/* 비트 시각화 */}
-        <BeatVisualizer currentBeat={currentBeat} isPlaying={isPlaying} />
+        <BeatVisualizer currentBeat={currentBeat} isPlaying={isPlaying} bpm={bpm} />
 
         {/* 템포 컨트롤 */}
         <TempoControl

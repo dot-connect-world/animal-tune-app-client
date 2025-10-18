@@ -20,6 +20,7 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
   const bpmRef = useRef(120);
+  const lastBeatTimeRef = useRef<number>(0);
 
   // BPM 설정
   const setBpm = useCallback((newBpm: number) => {
@@ -71,12 +72,21 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
   // Beat 이벤트 리스너
   useEffect(() => {
     const subscription = PreciseMetronome.addBeatListener((event) => {
+      const now = Date.now();
+      const interval = lastBeatTimeRef.current ? now - lastBeatTimeRef.current : 0;
+      lastBeatTimeRef.current = now;
+
       setCurrentBeat(event.beatNumber);
-      console.log(`Beat ${event.beatNumber}, Accent: ${event.isAccent}, Time: ${event.timestamp}`);
+
+      // 비트 간격 로그 (4→1 전환 시 특별 표시)
+      const isFirstBeat = event.beatNumber === 1;
+      const marker = isFirstBeat ? '🔴' : '  ';
+      console.log(`${marker} Beat ${event.beatNumber} | Interval: ${interval}ms | Expected: ${60000/bpmRef.current}ms`);
     });
 
     return () => {
       subscription.remove();
+      lastBeatTimeRef.current = 0;
     };
   }, []);
 

@@ -4,14 +4,15 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
-  SharedValue,
+  withSequence,
+  Easing,
 } from 'react-native-reanimated';
 import { RWValue } from '../../utils/responsive';
 
 interface BeatVisualizerProps {
   currentBeat: number; // 0 = 정지, 1-4 = 비트
   isPlaying: boolean;
+  bpm: number; // BPM 추가
 }
 
 const ANIMAL_IMAGES = {
@@ -29,8 +30,12 @@ const ANIMAL_IMAGES = {
   ],
 };
 
-export default function BeatVisualizer({ currentBeat, isPlaying }: BeatVisualizerProps) {
-  const [activeImages, setActiveImages] = useState([false, false, false, false]);
+export default function BeatVisualizer({ currentBeat, isPlaying, bpm }: BeatVisualizerProps) {
+  // 각 동물의 drum 상태를 State로 관리 (겹침 방지)
+  const [isDrumming1, setIsDrumming1] = useState(false);
+  const [isDrumming2, setIsDrumming2] = useState(false);
+  const [isDrumming3, setIsDrumming3] = useState(false);
+  const [isDrumming4, setIsDrumming4] = useState(false);
 
   const scale1 = useSharedValue(1);
   const scale2 = useSharedValue(1);
@@ -42,9 +47,22 @@ export default function BeatVisualizer({ currentBeat, isPlaying }: BeatVisualize
   const opacity3 = useSharedValue(0.6);
   const opacity4 = useSharedValue(0.6);
 
+  // BPM에 따른 애니메이션 duration 계산
+  // 비트 간격 = 60000ms / bpm (1분을 ms로 변환하고 bpm으로 나눔)
+  // 애니메이션은 비트 간격의 70%로 설정하여 겹치지 않도록
+  const beatInterval = 60000 / bpm;
+  const animDuration = Math.min(beatInterval * 0.7, 250); // 최대 250ms
+  const hitDuration = Math.min(animDuration * 0.4, 80); // 타격 시간
+  const fadeDuration = Math.min(animDuration * 0.6, 150); // 페이드 시간
+
   useEffect(() => {
     if (!isPlaying || currentBeat === 0) {
-      // 정지 상태
+      // 정지 상태 - 모두 stand 이미지로
+      setIsDrumming1(false);
+      setIsDrumming2(false);
+      setIsDrumming3(false);
+      setIsDrumming4(false);
+
       scale1.value = withTiming(1, { duration: 200 });
       scale2.value = withTiming(1, { duration: 200 });
       scale3.value = withTiming(1, { duration: 200 });
@@ -54,86 +72,96 @@ export default function BeatVisualizer({ currentBeat, isPlaying }: BeatVisualize
       opacity2.value = withTiming(0.6, { duration: 200 });
       opacity3.value = withTiming(0.6, { duration: 200 });
       opacity4.value = withTiming(0.6, { duration: 200 });
-
-      setActiveImages([false, false, false, false]);
       return;
     }
 
-    // 비트 애니메이션 (스프링으로 더 부드럽게)
+    // 새 비트 시작 시 모든 이전 애니메이션을 즉시 리셋
+    const resetOthers = (except: number) => {
+      if (except !== 1) {
+        setIsDrumming1(false);
+        scale1.value = 1;
+        opacity1.value = 0.6;
+      }
+      if (except !== 2) {
+        setIsDrumming2(false);
+        scale2.value = 1;
+        opacity2.value = 0.6;
+      }
+      if (except !== 3) {
+        setIsDrumming3(false);
+        scale3.value = 1;
+        opacity3.value = 0.6;
+      }
+      if (except !== 4) {
+        setIsDrumming4(false);
+        scale4.value = 1;
+        opacity4.value = 0.6;
+      }
+    };
+
+    // 비트 애니메이션 (모두 UI 스레드에서 동기 처리)
     const animateBeat = (
-      index: number,
-      scaleValue: SharedValue<number>,
-      opacityValue: SharedValue<number>
+      beatNum: number,
+      setDrumming: (value: boolean) => void,
+      scaleValue: Animated.SharedValue<number>,
+      opacityValue: Animated.SharedValue<number>
     ) => {
-      // 이미지를 drum으로 변경
-      setActiveImages(prev => {
-        const newActive = [...prev];
-        newActive[index] = true;
-        return newActive;
-      });
+      // 다른 동물들의 애니메이션 즉시 중단
+      resetOthers(beatNum);
 
-      // 스프링 애니메이션으로 더 자연스러운 움직임
-      scaleValue.value = withSpring(1.15, {
-        damping: 10,
-        stiffness: 150,
-        mass: 0.5,
-      });
+      // drum 이미지 즉시 표시
+      setDrumming(true);
 
-      opacityValue.value = withTiming(1, { duration: 80 });
+      // withSequence를 사용하여 순차적 애니메이션 보장
+      scaleValue.value = withSequence(
+        withTiming(1.2, { duration: hitDuration, easing: Easing.out(Easing.quad) }),
+        withTiming(1, { duration: fadeDuration, easing: Easing.in(Easing.quad) })
+      );
 
-      // 250ms 후 복귀 애니메이션
+      opacityValue.value = withSequence(
+        withTiming(1, { duration: hitDuration }),
+        withTiming(0.6, { duration: fadeDuration })
+      );
+
+      // drum 이미지를 stand로 복귀
       setTimeout(() => {
-        scaleValue.value = withSpring(1, {
-          damping: 12,
-          stiffness: 120,
-          mass: 0.8,
-        });
-        opacityValue.value = withTiming(0.6, { duration: 200 });
-      }, 120);
-
-      // 350ms 후 이미지를 stand로 복귀
-      setTimeout(() => {
-        setActiveImages(prev => {
-          const newActive = [...prev];
-          newActive[index] = false;
-          return newActive;
-        });
-      }, 350);
+        setDrumming(false);
+      }, hitDuration + fadeDuration);
     };
 
     // 현재 비트에 따라 애니메이션
     switch (currentBeat) {
       case 1:
-        animateBeat(0, scale1, opacity1);
+        animateBeat(1, setIsDrumming1, scale1, opacity1);
         break;
       case 2:
-        animateBeat(1, scale2, opacity2);
+        animateBeat(2, setIsDrumming2, scale2, opacity2);
         break;
       case 3:
-        animateBeat(2, scale3, opacity3);
+        animateBeat(3, setIsDrumming3, scale3, opacity3);
         break;
       case 4:
-        animateBeat(3, scale4, opacity4);
+        animateBeat(4, setIsDrumming4, scale4, opacity4);
         break;
     }
-  }, [currentBeat, isPlaying]);
+  }, [currentBeat, isPlaying, hitDuration, fadeDuration]);
 
-  const animatedStyle1 = useAnimatedStyle(() => ({
+  const animatedContainerStyle1 = useAnimatedStyle(() => ({
     transform: [{ scale: scale1.value }],
     opacity: opacity1.value,
   }));
 
-  const animatedStyle2 = useAnimatedStyle(() => ({
+  const animatedContainerStyle2 = useAnimatedStyle(() => ({
     transform: [{ scale: scale2.value }],
     opacity: opacity2.value,
   }));
 
-  const animatedStyle3 = useAnimatedStyle(() => ({
+  const animatedContainerStyle3 = useAnimatedStyle(() => ({
     transform: [{ scale: scale3.value }],
     opacity: opacity3.value,
   }));
 
-  const animatedStyle4 = useAnimatedStyle(() => ({
+  const animatedContainerStyle4 = useAnimatedStyle(() => ({
     transform: [{ scale: scale4.value }],
     opacity: opacity4.value,
   }));
@@ -141,30 +169,37 @@ export default function BeatVisualizer({ currentBeat, isPlaying }: BeatVisualize
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Animated.View style={[styles.animalContainer, animatedStyle1]}>
+        {/* 동물 1 */}
+        <Animated.View style={[styles.animalContainer, animatedContainerStyle1]}>
           <Image
-            source={activeImages[0] ? ANIMAL_IMAGES.drum[0] : ANIMAL_IMAGES.stand[0]}
+            source={isDrumming1 ? ANIMAL_IMAGES.drum[0] : ANIMAL_IMAGES.stand[0]}
             style={styles.animalImage}
             resizeMode="contain"
           />
         </Animated.View>
-        <Animated.View style={[styles.animalContainer, animatedStyle2]}>
+
+        {/* 동물 2 */}
+        <Animated.View style={[styles.animalContainer, animatedContainerStyle2]}>
           <Image
-            source={activeImages[1] ? ANIMAL_IMAGES.drum[1] : ANIMAL_IMAGES.stand[1]}
+            source={isDrumming2 ? ANIMAL_IMAGES.drum[1] : ANIMAL_IMAGES.stand[1]}
             style={styles.animalImage}
             resizeMode="contain"
           />
         </Animated.View>
-        <Animated.View style={[styles.animalContainer, animatedStyle3]}>
+
+        {/* 동물 3 */}
+        <Animated.View style={[styles.animalContainer, animatedContainerStyle3]}>
           <Image
-            source={activeImages[2] ? ANIMAL_IMAGES.drum[2] : ANIMAL_IMAGES.stand[2]}
+            source={isDrumming3 ? ANIMAL_IMAGES.drum[2] : ANIMAL_IMAGES.stand[2]}
             style={styles.animalImage}
             resizeMode="contain"
           />
         </Animated.View>
-        <Animated.View style={[styles.animalContainer, animatedStyle4]}>
+
+        {/* 동물 4 */}
+        <Animated.View style={[styles.animalContainer, animatedContainerStyle4]}>
           <Image
-            source={activeImages[3] ? ANIMAL_IMAGES.drum[3] : ANIMAL_IMAGES.stand[3]}
+            source={isDrumming4 ? ANIMAL_IMAGES.drum[3] : ANIMAL_IMAGES.stand[3]}
             style={styles.animalImage}
             resizeMode="contain"
           />
