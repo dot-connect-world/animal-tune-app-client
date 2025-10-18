@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
+  Image,
 } from 'react-native';
 import { useNativeMetronome } from '../hooks/useNativeMetronome';
 import TempoControl from '../components/metronome/TempoControl';
@@ -32,41 +32,38 @@ export default function MetronomeScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 비트 시각화 */}
-      <BeatVisualizer currentBeat={currentBeat} isPlaying={isPlaying} />
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {/* 비트 시각화 */}
+        <BeatVisualizer currentBeat={currentBeat} isPlaying={isPlaying} />
 
-      {/* 템포 컨트롤 */}
-      <TempoControl
-        bpm={bpm}
-        onBpmChange={setBpm}
-        onIncrease={increaseBpm}
-        onDecrease={decreaseBpm}
-        disabled={isPlaying}
-      />
+        {/* 템포 컨트롤 */}
+        <TempoControl
+          bpm={bpm}
+          onBpmChange={setBpm}
+          onIncrease={increaseBpm}
+          onDecrease={decreaseBpm}
+          disabled={isPlaying}
+        />
 
-      {/* 시작/중지 버튼 */}
-      <TouchableOpacity
-        style={[
-          styles.button,
-          isPlaying ? styles.buttonStop : styles.buttonStart,
-        ]}
-        onPress={handleToggle}
-      >
-        <Text style={styles.buttonText}>
-          {isPlaying ? '⏸️ 정지' : '▶️ 시작'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* 디버그 정보 (개발용) */}
-      {__DEV__ && isPlaying && (
-        <View style={styles.debugBox}>
-          <Text style={styles.debugText}>
-            Debug: Beat {currentBeat}/4 | BPM {bpm}
-          </Text>
-        </View>
-      )}
-    </ScrollView>
+        {/* 시작/중지 버튼 */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleToggle}
+          activeOpacity={0.8}
+        >
+          <Image
+            source={
+              isPlaying
+                ? require('../../assets/images/drum/run-drum.png')
+                : require('../../assets/images/drum/stop-drum.png')
+            }
+            style={isPlaying ? styles.drumImagePlaying : styles.drumImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -74,44 +71,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF9E6',
+    padding: RWValue(16),
   },
   content: {
-    padding: RWValue(20),
-    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   button: {
-    paddingHorizontal: RWValue(50),
-    paddingVertical: RHValue(18),
-    borderRadius: RWValue(30),
-    marginTop: RHValue(30),
-    minWidth: RWValue(220),
+    width: RWValue(140),
+    height: RWValue(140),
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: RHValue(60),
   },
-  buttonStart: {
-    backgroundColor: '#34C759',
+  drumImage: {
+    width: RWValue(140),
+    height: RWValue(140),
   },
-  buttonStop: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: RFValue(22),
-    fontWeight: 'bold',
-  },
-  debugBox: {
-    marginTop: RHValue(20),
-    padding: RWValue(10),
-    backgroundColor: '#E0E0E0',
-    borderRadius: RWValue(8),
-  },
-  debugText: {
-    fontSize: RFValue(12),
-    color: '#333',
-    fontFamily: 'monospace',
+  drumImagePlaying: {
+    width: RWValue(140),
+    height: RWValue(140),
+    marginTop: RHValue(-15),
   },
 });

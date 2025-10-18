@@ -155,8 +155,6 @@ export default function BeatVisualizer({ currentBeat, isPlaying }: BeatVisualize
             resizeMode="contain"
           />
         </Animated.View>
-      </View>
-      <View style={styles.row}>
         <Animated.View style={[styles.animalContainer, animatedStyle3]}>
           <Image
             source={activeImages[2] ? ANIMAL_IMAGES.drum[2] : ANIMAL_IMAGES.stand[2]}
@@ -180,16 +178,19 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: RWValue(40),
+    paddingVertical: RWValue(10),
+    marginBottom: RWValue(20),
   },
   row: {
     flexDirection: 'row',
-    marginVertical: RWValue(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: RWValue(65),
   },
   animalContainer: {
-    width: RWValue(100),
-    height: RWValue(100),
-    marginHorizontal: RWValue(16),
+    width: RWValue(90),
+    height: RWValue(90),
+    marginHorizontal: RWValue(5),
     justifyContent: 'center',
     alignItems: 'center',
   },
