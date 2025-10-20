@@ -25,7 +25,7 @@ class MetronomeEngine {
 
     // Timing
     private var startTime: Double = 0
-    private var beatCount: Int = 0
+    private var nextBeatIndex: Int = 0
     private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.animaltune.metronome", qos: .userInteractive)
 
@@ -152,16 +152,35 @@ class MetronomeEngine {
         self.beatsPerMeasure = beatsPerMeasure
         self.accentFirstBeat = accentFirstBeat
 
-        isPlaying = true
-        beatCount = 0
-        startTime = CACurrentMediaTime()
+        guard let playerNode = playerNode else {
+            print("MetronomeEngine: Player node unavailable")
+            return
+        }
 
-        playerNode?.play()
+        if audioEngine?.isRunning == false {
+            do {
+                try audioEngine?.start()
+            } catch {
+                print("MetronomeEngine: Failed to restart audio engine: \(error)")
+            }
+        }
+
+        isPlaying = true
+        let beatInterval = 60.0 / Double(bpm)
+        let initialLeadTime = min(0.3, beatInterval * 0.75)
+        startTime = CACurrentMediaTime() + initialLeadTime
+        nextBeatIndex = 0
+
+        playerNode.stop()
+        playerNode.reset()
+        playerNode.play()
+
+        timerQueue.async { [weak self] in
+            self?.scheduleBeatsIfNeeded()
+        }
+        startTimer()
 
         print("MetronomeEngine: Started metronome at \(bpm) BPM")
-
-        scheduleBeat()
-        startTimer()
     }
 
     func stop() {
@@ -169,7 +188,8 @@ class MetronomeEngine {
         timer?.cancel()
         timer = nil
         playerNode?.stop()
-        beatCount = 0
+        playerNode?.reset()
+        nextBeatIndex = 0
         print("MetronomeEngine: Stopped metronome")
     }
 
@@ -192,70 +212,72 @@ class MetronomeEngine {
 
     private func startTimer() {
         timer = DispatchSource.makeTimerSource(queue: timerQueue)
-
-        // Check every 5ms for precise scheduling
-        timer?.schedule(deadline: .now(), repeating: .milliseconds(5))
+        timer?.schedule(deadline: .now(), repeating: .milliseconds(10), leeway: .milliseconds(1))
         timer?.setEventHandler { [weak self] in
-            self?.checkAndSchedule()
+            self?.scheduleBeatsIfNeeded()
         }
         timer?.resume()
     }
 
-    private func checkAndSchedule() {
+    private func scheduleBeatsIfNeeded() {
         guard isPlaying else { return }
 
         let beatIntervalSeconds = 60.0 / Double(bpm)
-        let lookAheadTime = 0.1 // 100ms look-ahead window
+        let lookAheadTime = max(0.5, beatIntervalSeconds * 1.5)
+        let maxCatchUpLag = 0.05
 
-        let currentTime = CACurrentMediaTime()
-        let nextBeatTime = startTime + (Double(beatCount) * beatIntervalSeconds)
+        while isPlaying {
+            let beatTime = startTime + (Double(nextBeatIndex) * beatIntervalSeconds)
+            let remaining = beatTime - CACurrentMediaTime()
 
-        // Schedule if within look-ahead window
-        if nextBeatTime - currentTime < lookAheadTime {
-            scheduleBeat()
+            if remaining < -maxCatchUpLag {
+                // We've fallen behind—skip this beat to realign.
+                nextBeatIndex += 1
+                continue
+            }
+
+            if remaining > lookAheadTime {
+                break
+            }
+
+            scheduleBeat(beatIndex: nextBeatIndex, remaining: remaining)
+            nextBeatIndex += 1
         }
     }
 
-    private func scheduleBeat() {
+    private func scheduleBeat(beatIndex: Int, remaining: Double) {
         guard isPlaying, let playerNode = playerNode else { return }
 
-        let beatIntervalSeconds = 60.0 / Double(bpm)
-        let exactBeatTime = startTime + (Double(beatCount) * beatIntervalSeconds)
+        let beatNumber = (beatIndex % beatsPerMeasure) + 1
+        let isAccent = accentFirstBeat && beatNumber == 1
 
-        let currentBeatInMeasure = (beatCount % beatsPerMeasure) + 1
-        let isAccent = accentFirstBeat && currentBeatInMeasure == 1
-
-        // Select buffer
         guard let buffer = isAccent ? accentBuffer : clickBuffer else {
             print("MetronomeEngine: Buffer not available")
             return
         }
 
-        // Calculate precise playback time
-        let currentTime = CACurrentMediaTime()
-        let deltaSeconds = max(0, exactBeatTime - currentTime)
+        let delaySeconds = max(0, remaining)
+        let hostDelay = AVAudioTime.hostTime(forSeconds: delaySeconds)
+        let playTime = AVAudioTime(hostTime: mach_absolute_time() &+ hostDelay)
 
-        // Create AVAudioTime for precise scheduling
-        let outputFormat = playerNode.outputFormat(forBus: 0)
-        let sampleTime = AVAudioTime(hostTime: mach_absolute_time())
-
-        // Calculate future host time in nanoseconds
-        let delayInNanos = UInt64(deltaSeconds * 1_000_000_000)
-        let playTime = AVAudioTime(hostTime: sampleTime.hostTime + delayInNanos)
-
-        // Schedule buffer at exact time
         playerNode.scheduleBuffer(buffer, at: playTime, options: [], completionHandler: nil)
 
-        print(String(format: "MetronomeEngine: Beat %d (%d/%d) scheduled at %.3fs, isAccent: %@",
-                    beatCount + 1, currentBeatInMeasure, beatsPerMeasure, exactBeatTime, isAccent ? "true" : "false"))
-
-        // Notify JavaScript on main thread
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.onBeat(currentBeatInMeasure, isAccent, Int64(Date().timeIntervalSince1970 * 1000))
+        let eventTimestampMs = Int64((Date().timeIntervalSince1970 + delaySeconds) * 1000.0)
+        let delayNanoseconds = UInt64(delaySeconds * 1_000_000_000)
+        let clampedNanoseconds = min(delayNanoseconds, UInt64(Int.max))
+        let deadline = DispatchTime.now() + .nanoseconds(Int(clampedNanoseconds))
+        DispatchQueue.main.asyncAfter(deadline: deadline) { [weak self] in
+            guard let self = self, self.isPlaying else { return }
+            self.onBeat(beatNumber, isAccent, eventTimestampMs)
         }
 
-        beatCount += 1
+        #if DEBUG
+        print(String(format: "MetronomeEngine: Global beat %d (measure beat %d) scheduled %.3fs ahead (accent=%@)",
+                     beatIndex + 1,
+                     beatNumber,
+                     delaySeconds,
+                     isAccent ? "true" : "false"))
+        #endif
     }
 
     func release() {
