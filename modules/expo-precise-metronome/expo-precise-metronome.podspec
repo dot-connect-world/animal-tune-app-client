@@ -30,6 +30,6 @@ Pod::Spec.new do |s|
 
   # Resource bundle for WAV files
   s.resource_bundles = {
-    'ExpoModulesResources' => ['ios/Resources/**/*.wav']
+    'ExpoPreciseMetronomeResources' => ['ios/Resources/**/*.wav']
   }
 end

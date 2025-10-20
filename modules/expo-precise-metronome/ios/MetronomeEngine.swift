@@ -60,22 +60,38 @@ class MetronomeEngine {
     }
 
     private func loadSoundFiles() {
-        // Try to load WAV files from Resources bundle
-        guard let bundle = Bundle.main.path(forResource: "ExpoModulesResources", ofType: "bundle"),
-              let resourceBundle = Bundle(path: bundle) else {
-            print("MetronomeEngine: Resource bundle not found, using fallback sounds")
+        let resourceBundleName = "ExpoPreciseMetronomeResources"
+
+        let bundleCandidates: [Bundle?] = [
+            {
+                let bundle = Bundle(for: PreciseMetronomeModule.self)
+                if let url = bundle.url(forResource: resourceBundleName, withExtension: "bundle") {
+                    return Bundle(url: url)
+                }
+                return nil
+            }(),
+            {
+                if let url = Bundle.main.url(forResource: resourceBundleName, withExtension: "bundle") {
+                    return Bundle(url: url)
+                }
+                return nil
+            }()
+        ]
+
+        guard let bundle = bundleCandidates.compactMap({ $0 }).first else {
+            print("MetronomeEngine: Resource bundle '\(resourceBundleName)' not found, using fallback sounds")
             loadFallbackSounds()
             return
         }
 
         // Load click.wav
-        if let clickPath = resourceBundle.path(forResource: "click", ofType: "wav") {
+        if let clickPath = bundle.path(forResource: "click", ofType: "wav") {
             clickBuffer = loadAudioFile(path: clickPath)
             print("MetronomeEngine: Loaded click.wav from resources")
         }
 
         // Load accent.wav
-        if let accentPath = resourceBundle.path(forResource: "accent", ofType: "wav") {
+        if let accentPath = bundle.path(forResource: "accent", ofType: "wav") {
             accentBuffer = loadAudioFile(path: accentPath)
             print("MetronomeEngine: Loaded accent.wav from resources")
         }
@@ -95,23 +111,64 @@ class MetronomeEngine {
             return nil
         }
 
-        let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)!
-        let frameCount = AVAudioFrameCount(audioFile.length)
+        let sourceFormat = audioFile.processingFormat
+        let sourceFrameCount = AVAudioFrameCount(audioFile.length)
 
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            print("MetronomeEngine: Failed to create buffer")
+        guard let sourceBuffer = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: sourceFrameCount) else {
+            print("MetronomeEngine: Failed to create source buffer")
             return nil
         }
 
         do {
-            // Read and convert to target format
-            try audioFile.read(into: buffer)
-            print("MetronomeEngine: Loaded \(buffer.frameLength) frames at \(format.sampleRate) Hz")
-            return buffer
+            try audioFile.read(into: sourceBuffer)
         } catch {
             print("MetronomeEngine: Failed to read audio file: \(error)")
             return nil
         }
+
+        let targetFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1)!
+
+        let needsConversion = sourceFormat.channelCount != targetFormat.channelCount ||
+            abs(sourceFormat.sampleRate - targetFormat.sampleRate) > .ulpOfOne
+
+        guard needsConversion else {
+            print("MetronomeEngine: Loaded \(sourceBuffer.frameLength) frames at \(sourceFormat.sampleRate) Hz (no conversion needed)")
+            return sourceBuffer
+        }
+
+        guard let converter = AVAudioConverter(from: sourceFormat, to: targetFormat) else {
+            print("MetronomeEngine: Failed to create audio converter")
+            sourceBuffer.frameLength = sourceBuffer.frameCapacity
+            return sourceBuffer
+        }
+
+        let estimatedFrameCapacity = AVAudioFrameCount(Double(sourceBuffer.frameLength) * targetFormat.sampleRate / sourceFormat.sampleRate) + 1
+        guard let convertedBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: estimatedFrameCapacity) else {
+            print("MetronomeEngine: Failed to create converted buffer")
+            return sourceBuffer
+        }
+
+        var hasProvidedBuffer = false
+        let inputBlock: AVAudioConverterInputBlock = { _, outStatus in
+            if hasProvidedBuffer {
+                outStatus.pointee = .endOfStream
+                return nil
+            }
+            hasProvidedBuffer = true
+            outStatus.pointee = .haveData
+            return sourceBuffer
+        }
+
+        var conversionError: NSError?
+        converter.convert(to: convertedBuffer, error: &conversionError, withInputFrom: inputBlock)
+
+        if let conversionError {
+            print("MetronomeEngine: Conversion failed with error: \(conversionError)")
+            return sourceBuffer
+        }
+
+        print("MetronomeEngine: Converted audio to \(targetFormat.sampleRate) Hz, \(targetFormat.channelCount) channel(s)")
+        return convertedBuffer
     }
 
     private func loadFallbackSounds() {
