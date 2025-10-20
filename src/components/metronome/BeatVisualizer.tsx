@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import Animated, {
+  type SharedValue,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -103,8 +104,8 @@ export default function BeatVisualizer({ currentBeat, isPlaying, bpm }: BeatVisu
     const animateBeat = (
       beatNum: number,
       setDrumming: (value: boolean) => void,
-      scaleValue: Animated.SharedValue<number>,
-      opacityValue: Animated.SharedValue<number>
+      scaleValue: SharedValue<number>,
+      opacityValue: SharedValue<number>
     ) => {
       // 다른 동물들의 애니메이션 즉시 중단
       resetOthers(beatNum);

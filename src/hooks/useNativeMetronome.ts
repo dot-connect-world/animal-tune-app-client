@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 const PreciseMetronome = require('../../modules/expo-precise-metronome/src');
 
+interface BeatEvent {
+  beatNumber: number;
+  isAccent: boolean;
+  timestamp: number;
+}
+
 interface UseNativeMetronomeReturn {
   bpm: number;
   isPlaying: boolean;
@@ -71,7 +77,7 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
 
   // Beat 이벤트 리스너
   useEffect(() => {
-    const subscription = PreciseMetronome.addBeatListener((event) => {
+    const subscription = PreciseMetronome.addBeatListener((event: BeatEvent) => {
       const now = Date.now();
       const interval = lastBeatTimeRef.current ? now - lastBeatTimeRef.current : 0;
       lastBeatTimeRef.current = now;

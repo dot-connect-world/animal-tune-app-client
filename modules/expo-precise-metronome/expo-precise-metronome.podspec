@@ -3,7 +3,7 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name           = 'ExpoPreciseMetronome'
+  s.name           = 'expo-precise-metronome'
   s.version        = package['version']
   s.summary        = package['description']
   s.description    = package['description']
@@ -23,5 +23,13 @@ Pod::Spec.new do |s|
     'SWIFT_COMPILATION_MODE' => 'wholemodule'
   }
 
-  s.source_files = "ios/**/*.{h,m,swift}"
+  s.source_files = [
+    "ios/**/*.{h,m,mm}",
+    "ios/**/*.swift"
+  ]
+
+  # Resource bundle for WAV files
+  s.resource_bundles = {
+    'ExpoModulesResources' => ['ios/Resources/**/*.wav']
+  }
 end

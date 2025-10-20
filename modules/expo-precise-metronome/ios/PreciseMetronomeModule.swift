@@ -30,7 +30,7 @@ public class PreciseMetronomeModule: Module {
     }
 
     Function("isPlaying") { () -> Bool in
-      return metronomeEngine?.isPlaying() ?? false
+      return metronomeEngine?.getIsPlaying() ?? false
     }
 
     OnDestroy {
