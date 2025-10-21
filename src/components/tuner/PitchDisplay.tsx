@@ -33,7 +33,7 @@ export default function PitchDisplay({ note, frequency }: PitchDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 10,
   },
   noteLabel: {
     fontSize: 16,

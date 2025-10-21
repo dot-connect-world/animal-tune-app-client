@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { usePitchDetector } from '../hooks/usePitchDetector';
 import PitchDisplay from '../components/tuner/PitchDisplay';
 import PitchNeedle from '../components/tuner/PitchNeedle';
+import TunerCat from '../components/tuner/TunerCat';
 
 export default function TunerScreen() {
   const {
@@ -42,12 +43,7 @@ export default function TunerScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Tuner</Text>
-      </View>
-
+    <View style={styles.container}>
       {/* 에러 메시지 */}
       {error && (
         <View style={styles.errorContainer}>
@@ -61,36 +57,30 @@ export default function TunerScreen() {
         frequency={pitchData.frequency}
       />
 
+      {/* Pitch 상태 고양이 */}
+      <TunerCat
+        cents={pitchData.cents}
+        isActive={!pitchData.isWaitingForSound && pitchData.note !== null}
+      />
+
       {/* 정확도 게이지 */}
       <PitchNeedle cents={pitchData.cents} />
 
       {/* 시작/중지 버튼 */}
       <TouchableOpacity
-        style={[
-          styles.button,
-          isRecording ? styles.buttonStop : styles.buttonStart,
-        ]}
+        style={styles.button}
         onPress={handleToggle}
       >
-        <Text style={styles.buttonText}>
-          {isRecording ? '⏸️ 정지' : '▶️ 시작'}
-        </Text>
+        <Image
+          source={isRecording
+            ? require('../../assets/images/mike/mike-start.png')
+            : require('../../assets/images/mike/mike-stop.png')
+          }
+          style={styles.mikeImage}
+          resizeMode="contain"
+        />
       </TouchableOpacity>
-
-      {/* 디버그 정보 (개발용) */}
-      {__DEV__ && isRecording && (
-        <View style={styles.debugBox}>
-          <Text style={styles.debugText}>
-            Status: {pitchData.isStabilizing ? 'Stabilizing' : 'Active'}
-          </Text>
-          {pitchData.frequency && (
-            <Text style={styles.debugText}>
-              Freq: {pitchData.frequency.toFixed(2)} Hz
-            </Text>
-          )}
-        </View>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -98,21 +88,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f8ff',
-  },
-  content: {
     padding: 20,
     alignItems: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
+    justifyContent: 'center',
   },
   errorContainer: {
     backgroundColor: '#FFEBEE',
@@ -127,38 +105,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 30,
-    marginTop: 20,
-    minWidth: 200,
+    marginTop: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    justifyContent: 'center',
   },
-  buttonStart: {
-    backgroundColor: '#4CAF50',
-  },
-  buttonStop: {
-    backgroundColor: '#F44336',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  debugBox: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 8,
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#333',
-    fontFamily: 'monospace',
+  mikeImage: {
+    width: 100,
+    height: 100,
   },
 });
