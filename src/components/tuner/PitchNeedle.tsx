@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,36 +17,50 @@ const MAX_CENTS = 50;
 
 export default function PitchNeedle({ cents }: PitchNeedleProps) {
   const needlePosition = useSharedValue(0);
-  const NEEDLE_DEAD_ZONE = 3; // ±3 cents 이하 변화는 무시 (바늘 미세 떨림 방지)
+  const NEEDLE_DEAD_ZONE = 5; // ±5 cents 이하 변화는 무시 (바늘 미세 떨림 방지)
+  const STICKY_WINDOW_MS = 150; // 정중앙 근처에서는 150ms 동안 스티키 처리
+  const lastMoveTimestampRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    if (cents !== null) {
-      // cents를 -1 ~ 1 범위로 정규화
-      const normalized = Math.max(-1, Math.min(1, cents / MAX_CENTS));
-
-      const currentNormalized = needlePosition.value;
-      const diff = Math.abs(normalized - currentNormalized);
-      const diffInCents = diff * MAX_CENTS;
-
-      // Dead zone: 3 cents 이하 변화는 무시 (미세한 떨림 방지)
-      if (diffInCents < NEEDLE_DEAD_ZONE) {
-        return;
-      }
-
-      // 스프링 애니메이션으로 부드럽게 이동
-      needlePosition.value = withSpring(normalized, {
-        damping: 25,      // 적절한 댐핑 (너무 높으면 느림)
-        stiffness: 75,    // 적절한 강성 (너무 낮으면 느림)
-        mass: 0.8,        // 적절한 질량 (급격한 움직임 방지)
-      });
-    } else {
-      // 데이터 없을 때 중앙으로 복귀
+    if (cents === null) {
+      lastMoveTimestampRef.current = Date.now();
       needlePosition.value = withSpring(0, {
         damping: 25,
         stiffness: 75,
         mass: 0.8,
       });
+      return;
     }
+
+    const now = Date.now();
+
+    // cents를 -1 ~ 1 범위로 정규화
+    const normalized = Math.max(-1, Math.min(1, cents / MAX_CENTS));
+    const currentNormalized = needlePosition.value;
+    const diff = Math.abs(normalized - currentNormalized);
+    const diffInCents = diff * MAX_CENTS;
+
+    // Dead zone: 5 cents 이하 변화는 무시 (미세한 떨림 방지)
+    if (diffInCents < NEEDLE_DEAD_ZONE) {
+      return;
+    }
+
+    // 정중앙 근처에서 너무 빠른 왕복 움직임을 방지
+    if (
+      Math.abs(cents) <= NEEDLE_DEAD_ZONE &&
+      now - lastMoveTimestampRef.current < STICKY_WINDOW_MS
+    ) {
+      return;
+    }
+
+    lastMoveTimestampRef.current = now;
+
+    // 스프링 애니메이션으로 부드럽게 이동
+    needlePosition.value = withSpring(normalized, {
+      damping: 25, // 적절한 댐핑 (너무 높으면 느림)
+      stiffness: 75, // 적절한 강성 (너무 낮으면 느림)
+      mass: 0.8, // 적절한 질량 (급격한 움직임 방지)
+    });
   }, [cents]);
 
   // 바늘 위치 애니메이션

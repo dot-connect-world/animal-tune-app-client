@@ -39,21 +39,14 @@ export default function TunerCat({
 
   useEffect(() => {
     const shouldSlide = isActive && !isInTune;
-    if (shouldSlide) {
-      translateX.value = withRepeat(
-        withSequence(
-          withTiming(-14, { duration: 180 }),
-          withTiming(14, { duration: 180 }),
-          withTiming(0, { duration: 140 })
-        ),
-        -1,
-        true
-      );
+    if (shouldSlide && cents !== null) {
+      // cents 값에 비례하여 이동 (최대 ±50 픽셀 정도)
+      const moveDistance = Math.max(-50, Math.min(50, cents * 2));
+      translateX.value = withTiming(moveDistance, { duration: 300 });
       scale.value = withRepeat(
         withSequence(
-          withTiming(1.05, { duration: 220 }),
-          withTiming(0.95, { duration: 220 }),
-          withTiming(1, { duration: 180 })
+          withTiming(1.05, { duration: 400 }),
+          withTiming(0.95, { duration: 400 })
         ),
         -1,
         true
@@ -61,10 +54,10 @@ export default function TunerCat({
     } else {
       cancelAnimation(translateX);
       cancelAnimation(scale);
-      translateX.value = withTiming(0, { duration: 200 });
+      translateX.value = withTiming(0, { duration: 300 });
       scale.value = withTiming(1, { duration: 200 });
     }
-  }, [isActive, isInTune, scale, translateX]);
+  }, [isActive, isInTune, scale, translateX, cents]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }, { scale: scale.value }],
