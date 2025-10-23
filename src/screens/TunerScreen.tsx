@@ -6,11 +6,15 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  Dimensions,
 } from 'react-native';
 import { usePitchDetector } from '../hooks/usePitchDetector';
 import PitchDisplay from '../components/tuner/PitchDisplay';
 import PitchNeedle from '../components/tuner/PitchNeedle';
-import TunerCat from '../components/tuner/TunerCat';
+import AnimalGrid from '../components/tuner/AnimalGrid';
+
+const { width } = Dimensions.get('window');
+const MIKE_SIZE = Math.min(width * 0.25, 120);
 
 export default function TunerScreen() {
   const {
@@ -57,8 +61,8 @@ export default function TunerScreen() {
         frequency={pitchData.frequency}
       />
 
-      {/* Pitch 상태 고양이 */}
-      <TunerCat
+      {/* 동물 그리드 */}
+      <AnimalGrid
         cents={pitchData.cents}
         isActive={!pitchData.isWaitingForSound && pitchData.note !== null}
       />
@@ -105,12 +109,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    marginTop: 10,
+    marginTop: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mikeImage: {
-    width: 100,
-    height: 100,
+    width: MIKE_SIZE,
+    height: MIKE_SIZE,
   },
 });

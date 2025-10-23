@@ -1,6 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Note } from '../../constants/notes';
+
+const { width, height } = Dimensions.get('window');
+const NOTE_NAME_SIZE = Math.min(width * 0.22, height * 0.17);
+const OCTAVE_SIZE = NOTE_NAME_SIZE * 0.5;
+const FREQUENCY_SIZE = Math.min(width * 0.045, 17);
 
 interface PitchDisplayProps {
   note: Note | null;
@@ -10,8 +15,6 @@ interface PitchDisplayProps {
 export default function PitchDisplay({ note, frequency }: PitchDisplayProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.noteLabel}>현재 음계</Text>
-
       <View style={styles.noteContainer}>
         <Text style={styles.noteName}>
           {note ? note.name : '-'}
@@ -34,6 +37,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginVertical: 10,
+    marginTop: 5,
   },
   noteLabel: {
     fontSize: 16,
@@ -47,19 +51,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noteName: {
-    fontSize: 96,
+    fontSize: NOTE_NAME_SIZE,
     fontWeight: 'bold',
     color: '#007AFF',
     letterSpacing: -2,
   },
   octave: {
-    fontSize: 48,
+    fontSize: OCTAVE_SIZE,
     fontWeight: '600',
     color: '#007AFF',
     marginLeft: 4,
   },
   frequency: {
-    fontSize: 18,
+    fontSize: FREQUENCY_SIZE,
     color: '#999',
     fontWeight: '500',
   },

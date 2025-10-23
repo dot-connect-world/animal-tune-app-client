@@ -11,8 +11,12 @@ interface PitchNeedleProps {
   cents: number | null; // -50 ~ +50
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const GAUGE_WIDTH = width * 0.8;
+const GAUGE_HEIGHT = Math.min(height * 0.12, 60);
+const NEEDLE_WIDTH = Math.min(width * 0.015, 6);
+const NEEDLE_HEIGHT = GAUGE_HEIGHT * 0.5;
+const TICK_LABEL_SIZE = Math.min(width * 0.03, 12);
 const MAX_CENTS = 50;
 
 export default function PitchNeedle({ cents }: PitchNeedleProps) {
@@ -115,7 +119,7 @@ const styles = StyleSheet.create({
   },
   gauge: {
     width: GAUGE_WIDTH,
-    height: 80,
+    height: GAUGE_HEIGHT,
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
     justifyContent: 'center',
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
     bottom: 8,
   },
   tickLabel: {
-    fontSize: 12,
+    fontSize: TICK_LABEL_SIZE,
     color: '#999',
     fontWeight: '500',
   },
@@ -151,9 +155,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   needle: {
-    width: 8,
-    height: 40,
-    borderRadius: 4,
+    width: NEEDLE_WIDTH,
+    height: NEEDLE_HEIGHT,
+    borderRadius: NEEDLE_WIDTH * 0.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,

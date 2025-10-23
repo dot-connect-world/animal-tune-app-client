@@ -12,12 +12,12 @@ import Animated, {
 const { width, height } = Dimensions.get('window');
 const ANIMAL_SIZE = Math.min(width * 0.24, height * 0.21);
 
-const CAT_STAND = require('../../../assets/images/cat/stand-cat.png');
-const CAT_SLIDE = require('../../../assets/images/cat/slide-cat.png');
+const HAMSTER_STAND = require('../../../assets/images/hemster/stand-hemster.png');
+const HAMSTER_SLIDE = require('../../../assets/images/hemster/slide-hemster.png');
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
-interface TunerCatProps {
+interface TunerHamsterProps {
   cents: number | null;
   isActive: boolean;
   tolerance?: number;
@@ -25,11 +25,11 @@ interface TunerCatProps {
 
 const DEFAULT_TOLERANCE = 5; // ±5 cents 이내면 in-tune 으로 간주
 
-export default function TunerCat({
+export default function TunerHamster({
   cents,
   isActive,
   tolerance = DEFAULT_TOLERANCE,
-}: TunerCatProps) {
+}: TunerHamsterProps) {
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
 
@@ -74,14 +74,14 @@ export default function TunerCat({
     };
   });
 
-  const catSource: ImageSourcePropType = useMemo(
-    () => (isInTune ? CAT_STAND : CAT_SLIDE),
+  const hamsterSource: ImageSourcePropType = useMemo(
+    () => (isInTune ? HAMSTER_STAND : HAMSTER_SLIDE),
     [isInTune]
   );
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <AnimatedImage source={catSource} style={styles.image} resizeMode="contain" />
+      <AnimatedImage source={hamsterSource} style={styles.image} resizeMode="contain" />
     </Animated.View>
   );
 }
