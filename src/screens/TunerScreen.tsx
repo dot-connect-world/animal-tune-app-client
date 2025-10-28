@@ -4,62 +4,83 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Image,
   Dimensions,
+  Alert,
+  Linking,
 } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
 import { usePitchDetector } from '../hooks/usePitchDetector';
 import PitchDisplay from '../components/tuner/PitchDisplay';
 import PitchNeedle from '../components/tuner/PitchNeedle';
 import AnimalGrid from '../components/tuner/AnimalGrid';
 
-const { width } = Dimensions.get('window');
-const MIKE_SIZE = Math.min(width * 0.25, 120);
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MIKE_SIZE = Math.min(SCREEN_WIDTH * 0.25, 120);
 
 export default function TunerScreen() {
   const {
     pitchData,
     isRecording,
-    hasPermission,
+    permissionState,
     error,
     start,
     stop,
     requestPermission,
   } = usePitchDetector();
 
-  const handleToggle = async () => {
+  const handleMicButtonPress = async () => {
+    // 1. 녹음 중이면 중지
     if (isRecording) {
       await stop();
-    } else {
-      if (hasPermission === false) {
-        Alert.alert(
-          '마이크 권한 필요',
-          '기타 튜닝을 위해 마이크 권한이 필요합니다.',
-          [
-            { text: '취소', style: 'cancel' },
-            { text: '권한 요청', onPress: requestPermission },
-          ]
-        );
-        return;
-      }
+      return;
+    }
+
+    // 2. 권한 있으면 바로 시작
+    if (permissionState === 'granted') {
       await start();
+      return;
+    }
+
+    // 3. 권한 없으면 시스템 권한 다이얼로그 요청
+    const response = await requestPermission();
+
+    if (response?.granted === true) {
+      await start();
+    } else if (response && response.canAskAgain === false) {
+      // 더 이상 권한 다이얼로그를 표시할 수 없는 상태
+      // 설정에서만 권한 변경 가능 → 설정으로 안내
+      Alert.alert(
+        '마이크 권한 필요',
+        '기타 튜닝을 위해 마이크 권한이 필요합니다.\n기기 설정에서 마이크 권한을 허용해주세요.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '설정 열기',
+            onPress: () => {
+              Linking.openSettings().catch((err) => {
+                console.error('설정 열기 실패:', err);
+              });
+            },
+          },
+        ]
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* 에러 메시지 */}
-      {error && (
+      {/* Pitch 표시 또는 에러 메시지 */}
+      {error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
+      ) : (
+        <PitchDisplay
+          note={pitchData.note}
+          frequency={pitchData.frequency}
+        />
       )}
-
-      {/* Pitch 표시 */}
-      <PitchDisplay
-        note={pitchData.note}
-        frequency={pitchData.frequency}
-      />
 
       {/* 동물 그리드 */}
       <AnimalGrid
@@ -73,7 +94,7 @@ export default function TunerScreen() {
       {/* 시작/중지 버튼 */}
       <TouchableOpacity
         style={styles.button}
-        onPress={handleToggle}
+        onPress={handleMicButtonPress}
       >
         <Image
           source={isRecording
@@ -92,24 +113,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f8ff',
-    padding: 20,
+    padding: SCREEN_WIDTH * 0.05,
     alignItems: 'center',
     justifyContent: 'center',
   },
   errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: SCREEN_HEIGHT * 0.012,
+    marginTop: SCREEN_HEIGHT * 0.006,
+    minHeight: SCREEN_HEIGHT * 0.15, // PitchDisplay와 비슷한 높이 유지
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
   },
   errorText: {
     color: '#C62828',
-    fontSize: 14,
+    fontSize: RFValue(14),
     textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: RFValue(20),
   },
   button: {
-    marginTop: 5,
+    marginTop: SCREEN_HEIGHT * 0.006,
     alignItems: 'center',
     justifyContent: 'center',
   },

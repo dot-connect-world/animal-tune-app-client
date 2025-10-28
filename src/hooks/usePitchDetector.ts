@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Audio } from 'expo-av';
+import { AppState, AppStateStatus, Platform } from 'react-native';
+import {
+  getRecordingPermissionsAsync,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync
+} from 'expo-audio';
+import { PermissionStatus } from 'expo-modules-core';
 import Pitchy, { PitchyConfig, PitchyEventCallback } from 'react-native-pitchy';
 import { getClosestNote, resetCurrentNote, Note } from '../constants/notes';
 
@@ -12,14 +18,18 @@ interface PitchData {
   isWaitingForSound: boolean; // 소리 대기 중 여부 (1초 이상 소리 필요)
 }
 
+export type PermissionState =
+  | 'granted'     // 권한 허용됨
+  | 'denied';     // 권한 거부됨 (시스템 권한 다이얼로그로 요청 가능)
+
 interface UsePitchDetectorReturn {
   pitchData: PitchData;
   isRecording: boolean;
-  hasPermission: boolean | null;
+  permissionState: PermissionState;
   error: string | null;
   start: () => Promise<void>;
   stop: () => Promise<void>;
-  requestPermission: () => Promise<void>;
+  requestPermission: () => Promise<any>;
 }
 
 export function usePitchDetector(): UsePitchDetectorReturn {
@@ -32,7 +42,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
     isWaitingForSound: false,
   });
   const [isRecording, setIsRecording] = useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permissionState, setPermissionState] = useState<PermissionState>('denied'); // 초기값: denied (앱 시작 시 권한 체크 안 함)
   const [error, setError] = useState<string | null>(null);
   const subscriptionRef = useRef<{ remove: () => void } | null>(null);
   const isInitializedRef = useRef(false);
@@ -57,28 +67,117 @@ export function usePitchDetector(): UsePitchDetectorReturn {
   const MEDIAN_WINDOW_SIZE = 5; // 중앙값 필터 창 크기
   const LARGE_JUMP_RESET_THRESHOLD = 50; // 센트 기준으로 큰 점프 감지 (약 반음)
 
-  // 권한 요청
-  const requestPermission = useCallback(async () => {
+  // 권한 확인 (상태만 확인, 대화상자 띄우지 않음)
+  const checkPermission = useCallback(async () => {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-      if (status !== 'granted') {
-        setError('마이크 권한이 필요합니다.');
+      const response = await getRecordingPermissionsAsync();
+      const granted = response.granted === true;
+
+      // 권한 상태 업데이트 (blocked 상태 제거 - 모두 denied로 통합)
+      if (granted) {
+        setPermissionState('granted');
+        setError(null);
+      } else {
+        setPermissionState('denied');
       }
+
+      return response;
     } catch (err) {
-      setError('권한 요청 실패: ' + (err as Error).message);
+      console.error('권한 확인 실패:', err);
+      setPermissionState('denied');
+      return null;
     }
   }, []);
 
-  // 초기 권한 확인
+  // 권한 요청 (대화상자 표시)
+  const requestPermission = useCallback(async () => {
+    try {
+      const response = await requestRecordingPermissionsAsync();
+      const granted = response.granted === true;
+
+      // 권한 상태 업데이트
+      if (granted) {
+        setPermissionState('granted');
+        setError(null);
+      } else {
+        setPermissionState('denied');
+        // canAskAgain: false인 경우 TunerScreen에서 Alert로 처리하므로 여기서는 에러 메시지 표시 안 함
+        setError(null);
+      }
+
+      return response;
+    } catch (err) {
+      setError('권한 요청 실패: ' + (err as Error).message);
+      setPermissionState('denied');
+      return null;
+    }
+  }, []);
+
+  // iOS: 백그라운드 복귀 시 권한 재확인 ("이번만 허용" 대응)
   useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
+    // Android는 백그라운드에서도 권한 유지되므로 iOS만 처리
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // 앱이 포그라운드로 돌아올 때 권한 재확인
+        const response = await checkPermission();
+        const hasCurrentPermission = response?.granted === true;
+
+        // iOS "이번만 허용" → 백그라운드 → 권한 해제 → 복귀
+        if (!hasCurrentPermission && isRecording) {
+          // 녹음 중이었는데 권한이 해제됨 → 자동 중지
+          try {
+            await Pitchy.stop();
+            if (subscriptionRef.current) {
+              subscriptionRef.current.remove();
+              subscriptionRef.current = null;
+            }
+            await setAudioModeAsync({
+              allowsRecording: false,
+            });
+            setIsRecording(false);
+
+            // 초기화
+            frequencyBufferRef.current = [];
+            lastFrequencyRef.current = null;
+            soundStartTimeRef.current = null;
+            lastSoundTimeRef.current = 0;
+            isActiveRef.current = false;
+            silenceStartRef.current = null;
+            recentFrequenciesRef.current = [];
+            resetCurrentNote();
+
+            setPitchData({
+              frequency: null,
+              note: null,
+              cents: null,
+              clarity: null,
+              isStabilizing: false,
+              isWaitingForSound: false,
+            });
+
+            setError('마이크 권한이 해제되어 튜너가 중지되었습니다.');
+          } catch (err) {
+            console.error('녹음 중지 실패:', err);
+          }
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkPermission, isRecording]);
 
   // Pitchy 초기화 (권한 획득 후)
   useEffect(() => {
     const initPitchy = async () => {
-      if (hasPermission && !isInitializedRef.current) {
+      if (permissionState === 'granted' && !isInitializedRef.current) {
         try {
           // Pitchy 초기화 (악기 튜너 최적화 설정)
           const config: PitchyConfig = {
@@ -105,7 +204,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         subscriptionRef.current = null;
       }
     };
-  }, [hasPermission]);
+  }, [permissionState]);
 
   // Pitch detection 시작
   const start = useCallback(async () => {
@@ -116,14 +215,32 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         return;
       }
 
-      if (!hasPermission) {
-        await requestPermission();
+      // 권한 실시간 체크 (permissionState는 React 상태 업데이트 타이밍 때문에 신뢰할 수 없음)
+      const currentPermission = await getRecordingPermissionsAsync();
+      if (!currentPermission.granted) {
+        setPermissionState('denied');
+        setError('마이크 권한이 필요합니다.');
         return;
       }
 
+      // 권한이 있으면 상태 업데이트
+      setPermissionState('granted');
+
+      // Pitchy 초기화 체크 및 필요시 초기화
       if (!isInitializedRef.current) {
-        setError('피치 감지가 아직 초기화되지 않았습니다. 잠시 후 다시 시도해주세요.');
-        return;
+        try {
+          const config: PitchyConfig = {
+            bufferSize: 4096,
+            minVolume: 30,
+          };
+          await Pitchy.init(config);
+          isInitializedRef.current = true;
+          console.log('Pitchy 초기화 완료 (start 함수 내)');
+        } catch (err) {
+          console.error('Pitchy 초기화 실패:', err);
+          setError('피치 감지 초기화 실패: ' + (err as Error).message);
+          return;
+        }
       }
 
       isStartingRef.current = true;
@@ -176,9 +293,9 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       });
 
       // 오디오 모드 설정
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
 
       // Pitchy 리스너 설정 (소리 지속 시간 기반 감지 로직)
@@ -349,7 +466,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
     } finally {
       isStartingRef.current = false; // 실행 완료
     }
-  }, [hasPermission, requestPermission]);
+  }, []); // 의존성 제거: 실시간으로 권한 체크하므로 permissionState에 의존하지 않음
 
   // Pitch detection 중지
   const stop = useCallback(async () => {
@@ -363,8 +480,8 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         subscriptionRef.current = null;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
+      await setAudioModeAsync({
+        allowsRecording: false,
       });
 
       setIsRecording(false);
@@ -399,7 +516,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
   return {
     pitchData,
     isRecording,
-    hasPermission,
+    permissionState,
     error,
     start,
     stop,

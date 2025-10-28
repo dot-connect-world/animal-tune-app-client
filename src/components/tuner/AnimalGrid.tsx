@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import TunerCat from './TunerCat';
 import TunerDog from './TunerDog';
 import TunerTurtle from './TunerTurtle';
@@ -30,16 +30,18 @@ export default function AnimalGrid({
   );
 }
 
+const { height } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 20,
+    marginVertical: height * 0.024,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: height * 0.012,
   },
 });

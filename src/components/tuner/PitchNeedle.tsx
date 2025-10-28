@@ -114,14 +114,14 @@ export default function PitchNeedle({ cents }: PitchNeedleProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: height * 0.036,
     width: '100%',
   },
   gauge: {
     width: GAUGE_WIDTH,
     height: GAUGE_HEIGHT,
     backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    borderRadius: width * 0.03,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   centerLine: {
     position: 'absolute',
-    width: 2,
+    width: width * 0.005,
     height: '100%',
     backgroundColor: '#007AFF',
     opacity: 0.3,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '90%',
-    bottom: 8,
+    bottom: height * 0.01,
   },
   tickLabel: {
     fontSize: TICK_LABEL_SIZE,

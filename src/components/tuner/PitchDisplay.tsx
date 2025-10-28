@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
 import { Note } from '../../constants/notes';
 
 const { width, height } = Dimensions.get('window');
 const NOTE_NAME_SIZE = Math.min(width * 0.22, height * 0.17);
 const OCTAVE_SIZE = NOTE_NAME_SIZE * 0.5;
-const FREQUENCY_SIZE = Math.min(width * 0.045, 17);
+const FREQUENCY_SIZE = RFValue(14);
 
 interface PitchDisplayProps {
   note: Note | null;
@@ -36,19 +37,19 @@ export default function PitchDisplay({ note, frequency }: PitchDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 10,
-    marginTop: 5,
+    marginVertical: height * 0.012,
+    marginTop: height * 0.006,
   },
   noteLabel: {
-    fontSize: 16,
+    fontSize: RFValue(14),
     color: '#666',
-    marginBottom: 12,
+    marginBottom: height * 0.015,
     fontWeight: '500',
   },
   noteContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    marginBottom: height * 0.01,
   },
   noteName: {
     fontSize: NOTE_NAME_SIZE,
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     fontSize: OCTAVE_SIZE,
     fontWeight: '600',
     color: '#007AFF',
-    marginLeft: 4,
+    marginLeft: width * 0.01,
   },
   frequency: {
     fontSize: FREQUENCY_SIZE,
