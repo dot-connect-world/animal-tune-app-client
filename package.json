@@ -5,7 +5,7 @@
   "scripts": {
     "start": "expo start",
     "android": "npx expo run:android",
-    "device-android-clear": "cd android && ./gradlew clean && cd .. && npx expo run:android --device",
+    "device-android-clear": "rm -rf android && npx expo prebuild && npx expo run:android --device",
     "device-android": "npx expo run:android --device",
     "ios": "npx expo run:ios",
     "web": "expo start --web",
