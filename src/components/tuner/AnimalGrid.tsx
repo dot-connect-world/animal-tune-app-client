@@ -19,8 +19,8 @@ export default function AnimalGrid({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <TunerCat cents={cents} isActive={isActive} tolerance={tolerance} />
         <TunerDog cents={cents} isActive={isActive} tolerance={tolerance} />
+        <TunerCat cents={cents} isActive={isActive} tolerance={tolerance} />
       </View>
       <View style={styles.row}>
         <TunerTurtle cents={cents} isActive={isActive} tolerance={tolerance} />
