@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import TabNavigator from './src/navigation/TabNavigator';
+import './src/i18n'; // i18n 초기화
 
 // Debug 메시지 비활성화
 import { LogBox } from 'react-native';

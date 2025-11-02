@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { useTranslation } from 'react-i18next';
 import { usePitchDetector } from '../hooks/usePitchDetector';
 import PitchDisplay from '../components/tuner/PitchDisplay';
 import PitchNeedle from '../components/tuner/PitchNeedle';
@@ -19,6 +20,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MIKE_SIZE = Math.min(SCREEN_WIDTH * 0.25, 120);
 
 export default function TunerScreen() {
+  const { t } = useTranslation();
   const {
     pitchData,
     isRecording,
@@ -51,15 +53,15 @@ export default function TunerScreen() {
       // 더 이상 권한 다이얼로그를 표시할 수 없는 상태
       // 설정에서만 권한 변경 가능 → 설정으로 안내
       Alert.alert(
-        '마이크 권한 필요',
-        '기타 튜닝을 위해 마이크 권한이 필요합니다.\n기기 설정에서 마이크 권한을 허용해주세요.',
+        t('permissions.microphone.title'),
+        t('permissions.microphone.message'),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: '설정 열기',
+            text: t('permissions.microphone.openSettings'),
             onPress: () => {
               Linking.openSettings().catch((err) => {
-                console.error('설정 열기 실패:', err);
+                console.error(t('errors.settingsOpenFailed'), err);
               });
             },
           },

@@ -8,6 +8,7 @@ import {
 import { PermissionStatus } from 'expo-modules-core';
 import Pitchy, { PitchyConfig, PitchyEventCallback } from 'react-native-pitchy';
 import { getClosestNote, resetCurrentNote, Note } from '../constants/notes';
+import i18n from '../i18n';
 
 interface PitchData {
   frequency: number | null;
@@ -107,7 +108,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
 
       return response;
     } catch (err) {
-      setError('권한 요청 실패: ' + (err as Error).message);
+      setError(i18n.t('errors.permissionRequestFailed', { error: (err as Error).message }));
       setPermissionState('denied');
       return null;
     }
@@ -159,7 +160,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
               isWaitingForSound: false,
             });
 
-            setError('마이크 권한이 해제되어 튜너가 중지되었습니다.');
+            setError(i18n.t('errors.permissionRevoked'));
           } catch (err) {
             console.error('녹음 중지 실패:', err);
           }
@@ -190,7 +191,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
           console.log('Pitchy 초기화 완료');
         } catch (err) {
           console.error('Pitchy 초기화 실패:', err);
-          setError('피치 감지 초기화 실패: ' + (err as Error).message);
+          setError(i18n.t('errors.pitchDetectionInitFailed', { error: (err as Error).message }));
         }
       }
     };
@@ -219,7 +220,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       const currentPermission = await getRecordingPermissionsAsync();
       if (!currentPermission.granted) {
         setPermissionState('denied');
-        setError('마이크 권한이 필요합니다.');
+        setError(i18n.t('errors.microphoneRequired'));
         return;
       }
 
@@ -238,7 +239,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
           console.log('Pitchy 초기화 완료 (start 함수 내)');
         } catch (err) {
           console.error('Pitchy 초기화 실패:', err);
-          setError('피치 감지 초기화 실패: ' + (err as Error).message);
+          setError(i18n.t('errors.pitchDetectionInitFailed', { error: (err as Error).message }));
           return;
         }
       }
@@ -455,7 +456,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       setIsRecording(true);
 
     } catch (err) {
-      setError('피치 감지 시작 실패: ' + (err as Error).message);
+      setError(i18n.t('errors.pitchDetectionStartFailed', { error: (err as Error).message }));
       setIsRecording(false);
 
       // 에러 발생 시 리스너 정리
@@ -509,7 +510,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         isWaitingForSound: false,
       });
     } catch (err) {
-      setError('피치 감지 중지 실패: ' + (err as Error).message);
+      setError(i18n.t('errors.pitchDetectionStopFailed', { error: (err as Error).message }));
     }
   }, []);
 

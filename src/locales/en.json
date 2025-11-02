@@ -1,0 +1,49 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "ok": "OK",
+    "close": "Close",
+    "bpm": "BPM",
+    "hz": "Hz"
+  },
+  "navigation": {
+    "tuner": "Tuner",
+    "metronome": "Metronome"
+  },
+  "tuner": {
+    "title": "🎸 Tuner",
+    "noSound": "Cannot detect sound"
+  },
+  "metronome": {
+    "title": "🎵 Metronome",
+    "tempo": {
+      "largo": "Largo (Very Slow)",
+      "adagio": "Adagio (Slow)",
+      "andante": "Andante (Moderate)",
+      "moderato": "Moderato (Medium)",
+      "allegro": "Allegro (Fast)",
+      "presto": "Presto (Very Fast)",
+      "prestissimo": "Prestissimo (Extremely Fast)"
+    }
+  },
+  "permissions": {
+    "microphone": {
+      "title": "Microphone Permission Required",
+      "message": "Animal Tune needs microphone access for guitar tuning.\nPlease allow microphone permission in device settings.",
+      "openSettings": "Open Settings",
+      "ios": {
+        "description": "Allow Animal Tune to access your microphone for guitar tuning."
+      }
+    }
+  },
+  "errors": {
+    "microphoneRequired": "Microphone permission is required.",
+    "pitchDetectionInitFailed": "Failed to initialize pitch detection: {{error}}",
+    "pitchDetectionStartFailed": "Failed to start pitch detection: {{error}}",
+    "pitchDetectionStopFailed": "Failed to stop pitch detection: {{error}}",
+    "permissionRevoked": "Microphone permission was revoked. Tuner stopped.",
+    "permissionRequestFailed": "Failed to request permission: {{error}}",
+    "settingsOpenFailed": "Failed to open settings"
+  }
+}
