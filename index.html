@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy / 개인정보 처리방침</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2, h3 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .lang-toggle {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .lang-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .lang-btn:hover {
+            background-color: #2980b9;
+        }
+        .lang-btn.active {
+            background-color: #2c3e50;
+        }
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        hr {
+            margin: 50px 0;
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-toggle">
+        <button class="lang-btn active" onclick="switchLang('ko')">한국어</button>
+        <button class="lang-btn" onclick="switchLang('en')">English</button>
+    </div>
+
+    <!-- 한국어 버전 -->
+    <div id="ko-content" class="lang-content active">
+        <h1>개인정보 처리방침</h1>
+        
+        <div class="section">
+            <h2>동물 튜너</h2>
+            <p>본 앱은 사용자의 어떠한 개인정보도 수집, 저장, 또는 제3자와 공유하지 않습니다.</p>
+        </div>
+        
+        <div class="section">
+            <h3>1. 정보 수집</h3>
+            <p>본 앱은 완전히 오프라인에서 작동하며, 인터넷 연결이나 외부 서버와의 통신을 필요로 하지 않습니다. 
+            따라서 사용자의 개인정보가 수집되거나 전송되지 않습니다.</p>
+        </div>
+        
+        <div class="section">
+            <h3>2. 정보 사용</h3>
+            <p>본 앱은 어떠한 사용자 정보도 수집하지 않으므로, 정보를 사용하거나 처리하지 않습니다.</p>
+        </div>
+        
+        <div class="section">
+            <h3>3. 정보 공유</h3>
+            <p>본 앱은 수집하는 정보가 없으므로, 제3자와 공유되는 정보가 없습니다.</p>
+        </div>
+        
+        <div class="section">
+            <h3>4. 연락처</h3>
+            <p>개인정보 처리방침과 관련하여 문의사항이 있으시면 아래 이메일로 연락 주시기 바랍니다.</p>
+            <p>이메일: praytogethernoreply@gmail.com</p>
+        </div>
+        
+        <div class="section">
+            <p><strong>최종 수정일:</strong> 2025년 11월 2일</p>
+        </div>
+    </div>
+
+    <!-- 영어 버전 -->
+    <div id="en-content" class="lang-content">
+        <h1>Privacy Policy</h1>
+        
+        <div class="section">
+            <h2>Animal Tuner</h2>
+            <p>This app does not collect, store, or share any personal information from users.</p>
+        </div>
+        
+        <div class="section">
+            <h3>1. Information Collection</h3>
+            <p>This app operates entirely offline and does not require an internet connection or 
+            communication with external servers. Therefore, no personal information is collected or transmitted.</p>
+        </div>
+        
+        <div class="section">
+            <h3>2. Information Usage</h3>
+            <p>Since this app does not collect any user information, no information is used or processed.</p>
+        </div>
+        
+        <div class="section">
+            <h3>3. Information Sharing</h3>
+            <p>Since there is no information collected by this app, no information is shared with third parties.</p>
+        </div>
+        
+        <div class="section">
+            <h3>4. Contact</h3>
+            <p>If you have any questions regarding this privacy policy, please contact us at:</p>
+            <p>Email: praytogethernoreply@gmail.com</p>
+        </div>
+        
+        <div class="section">
+            <p><strong>Last Updated:</strong> November 2, 2025</p>
+        </div>
+    </div>
+
+    <script>
+        function switchLang(lang) {
+            // 모든 언어 콘텐츠 숨기기
+            document.querySelectorAll('.lang-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 모든 버튼 비활성화
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 선택한 언어 표시
+            document.getElementById(lang + '-content').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
