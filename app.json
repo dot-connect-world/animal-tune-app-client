@@ -19,7 +19,15 @@
           "microphonePermission": "Allow Animal Tune to access your microphone for guitar tuning."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "$ADMOB_ANDROID_APP_ID",
+          "iosAppId": "$ADMOB_IOS_APP_ID",
+          "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -32,7 +40,8 @@
       },
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.INTERNET"
       ],
       "package": "com.animaltune.app",
       "edgeToEdgeEnabled": true,
