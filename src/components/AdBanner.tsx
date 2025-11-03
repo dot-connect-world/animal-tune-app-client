@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { ADMOB_ANDROID_BANNER_ID, ADMOB_IOS_BANNER_ID } from '@env';
 import { RHValue } from '../utils/responsive';
@@ -62,18 +62,13 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'android' ? StatusBar.currentHeight || RHValue(18) : RHValue(36), // Status bar 높이만큼 아래로 (반응형)
     left: 0,
     right: 0,
-    height: RHValue(100), // 헤더 높이와 동일하게 설정
+    height: RHValue(60),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
     zIndex: 1000,
-    elevation: 10, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
 });
