@@ -16,7 +16,6 @@ export default function TabNavigator() {
 
   return (
     <View style={styles.container}>
-      <AdBanner />
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
@@ -82,6 +81,7 @@ export default function TabNavigator() {
           options={{ title: t('metronome.title') }}
         />
       </Tab.Navigator>
+      <AdBanner />
     </View>
   );
 }
