@@ -12,11 +12,11 @@
     "metronome": "메트로놈"
   },
   "tuner": {
-    "title": "🎸 튜너",
+    "title": "튜너",
     "noSound": "소리를 감지할 수 없습니다"
   },
   "metronome": {
-    "title": "🎵 메트로놈",
+    "title": "메트로놈",
     "tempo": {
       "largo": "Largo (매우 느림)",
       "adagio": "Adagio (느림)",
