@@ -3,7 +3,6 @@ import { View, StyleSheet, Text, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
 
 import TunerScreen from '../screens/TunerScreen';
 import MetronomeScreen from '../screens/MetronomeScreen';
@@ -14,11 +13,23 @@ const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   const { t } = useTranslation();
-  const theme = useTheme();
 
-  // 실제 적용된 theme 값 확인
-  console.log('🎨 Current theme colors:', theme.colors);
-  console.log('🎨 Text color from theme:', theme.colors.text);
+  const renderHeaderTitle = (
+    iconName: keyof typeof Ionicons.glyphMap,
+    label: string
+  ) => (
+    <View style={styles.headerTitleWrapper}>
+      <Ionicons
+        name={iconName}
+        size={RFValue(20)}
+        color="#2F80ED"
+        style={styles.headerTitleIcon}
+      />
+      <Text allowFontScaling={false} style={styles.headerTitleText}>
+        {label}
+      </Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -67,13 +78,12 @@ export default function TabNavigator() {
               </Text>
             );
           },
-          headerShown: true,
-          // 헤더 스타일
           headerStyle: {
             backgroundColor: '#FFFFFF',
-            height: RHValue(100),
-            shadowOpacity: 0, // shadow 제거
-            elevation: 0, // Android elevation 제거
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: '#E5E5EA',
+            shadowOpacity: 0,
+            elevation: 0,
           },
           headerTitleStyle: {
             fontSize: RFValue(22),
@@ -82,7 +92,6 @@ export default function TabNavigator() {
             // color는 NavigationContainer의 theme.colors.text 사용
           },
           headerTitleAlign: 'center',
-          // 탭바 스타일
           tabBarStyle: {
             backgroundColor: '#FFFFFF',
             borderTopWidth: 0,
@@ -98,42 +107,18 @@ export default function TabNavigator() {
           name="Tuner"
           component={TunerScreen}
           options={{
-            headerTitle: () => (
-              <View>
-                <Text style={{
-                  fontSize: RFValue(22),
-                  fontWeight: '900',
-                  color: '#000000',
-                  backgroundColor: '#FFFF00', // 노란색 배경으로 테스트
-                }}>
-                  {t('tuner.title')}
-                </Text>
-                <Text style={{ fontSize: 10, color: '#FF0000' }}>
-                  DEBUG: #000000 black
-                </Text>
-              </View>
-            ),
+            title: t('tuner.title'),
+            headerTitle: () =>
+              renderHeaderTitle('musical-notes', t('tuner.title')),
           }}
         />
         <Tab.Screen
           name="Metronome"
           component={MetronomeScreen}
           options={{
-            headerTitle: () => (
-              <View>
-                <Text style={{
-                  fontSize: RFValue(22),
-                  fontWeight: '900',
-                  color: '#000000',
-                  backgroundColor: '#FFFF00', // 노란색 배경으로 테스트
-                }}>
-                  {t('metronome.title')}
-                </Text>
-                <Text style={{ fontSize: 10, color: '#FF0000' }}>
-                  DEBUG: #000000 black
-                </Text>
-              </View>
-            ),
+            title: t('metronome.title'),
+            headerTitle: () =>
+              renderHeaderTitle('timer', t('metronome.title')),
           }}
         />
       </Tab.Navigator>
@@ -145,5 +130,18 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerTitleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitleIcon: {
+    marginRight: RFValue(8),
+  },
+  headerTitleText: {
+    fontSize: RFValue(22),
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: 0.5,
   },
 });
