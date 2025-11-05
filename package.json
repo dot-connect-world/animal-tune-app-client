@@ -9,7 +9,9 @@
     "device-android": "npx expo run:android --device",
     "ios": "npx expo run:ios",
     "web": "expo start --web",
-    "build-android-preview-local": "eas build --platform android --profile preview --local --clear-cache"
+    "build-android-preview-local": "eas build --platform android --profile preview --local --clear-cache",
+    "build-ios-production-cloud-submit": "eas build --platform ios --profile production --auto-submit --clear-cache",
+    "build-ios-production-cloud": " eas build --platform ios --profile production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
