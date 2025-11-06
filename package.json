@@ -7,7 +7,7 @@
     "android": "npx expo run:android",
     "device-android-clear": "rm -rf android && npx expo prebuild --clean && npx expo run:android --device",
     "device-android": "npx expo run:android --device",
-    "ios": "npx expo run:ios",
+    "ios": "npx expo prebuild --clean && npx expo run:ios",
     "web": "expo start --web",
     "build-android-preview-local": "eas build --platform android --profile preview --local --clear-cache",
     "build-ios-production-cloud-submit": "eas build --platform ios --profile production --auto-submit --clear-cache",

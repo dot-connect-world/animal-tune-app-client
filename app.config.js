@@ -33,8 +33,9 @@ module.exports = {
       "./plugins/withNativePitchDetector"
     ],
     ios: {
+      bundleIdentifier: "site.praytogether.AnimalTune",
       supportsTablet: true,
-      bundleIdentifier: "com.animaltune.app",
+      buildNumber: "1",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
@@ -49,7 +50,8 @@ module.exports = {
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.INTERNET"
       ],
-      package: "com.animaltune.app",
+      package: "site.praytogether.AnimalTune",
+      versionCode: 1,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false
     },

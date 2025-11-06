@@ -1,7 +1,8 @@
 {
   "platforms": ["apple", "android"],
   "apple": {
-    "modules": ["NativePitchDetectorModule"]
+    "modules": ["NativePitchDetectorModule"],
+    "podspecPath": "native-pitch-detector.podspec"
   },
   "android": {
     "modules": ["expo.modules.nativepitchdetector.NativePitchDetectorModule"]
