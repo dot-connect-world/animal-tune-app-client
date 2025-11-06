@@ -17,7 +17,10 @@ import PitchNeedle from '../components/tuner/PitchNeedle';
 import AnimalGrid from '../components/tuner/AnimalGrid';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MIKE_SIZE = Math.min(SCREEN_WIDTH * 0.32, 150);
+const isTablet = SCREEN_WIDTH >= 768;
+const MIKE_SIZE = isTablet
+  ? Math.min(SCREEN_WIDTH * 0.32, 150)
+  : Math.min(SCREEN_WIDTH * 0.26, 120);
 
 export default function TunerScreen() {
   const { t } = useTranslation();

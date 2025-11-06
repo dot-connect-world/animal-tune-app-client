@@ -122,7 +122,7 @@ export default function TabNavigator() {
           }}
         />
       </Tab.Navigator>
-      <AdBanner />
+      {/* <AdBanner /> */}
     </View>
   );
 }
