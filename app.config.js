@@ -29,7 +29,8 @@ module.exports = {
           iosAppId: process.env.ADMOB_IOS_APP_ID,
           userTrackingUsageDescription: "This identifier will be used to deliver personalized ads to you."
         }
-      ]
+      ],
+      "./plugins/withNativePitchDetector"
     ],
     ios: {
       supportsTablet: true,

@@ -6,7 +6,7 @@ import {
   setAudioModeAsync
 } from 'expo-audio';
 import { PermissionStatus } from 'expo-modules-core';
-import Pitchy, { PitchyConfig, PitchyEventCallback } from 'react-native-pitchy';
+import Pitchy, { PitchyConfig, PitchyEventCallback } from '../modules/pitchModule';
 import { getClosestNote, resetCurrentNote, Note } from '../constants/notes';
 import i18n from '../i18n';
 

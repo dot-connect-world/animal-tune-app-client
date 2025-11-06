@@ -1,0 +1,28 @@
+{
+  "name": "native-pitch-detector",
+  "version": "0.1.0",
+  "description": "Android native pitch detection module for AnimalTune",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "expo-module build"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "pitch",
+    "audio",
+    "native-module"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/animal-tune/native-pitch-detector"
+  },
+  "author": "Animal Tune",
+  "license": "MIT",
+  "devDependencies": {
+    "expo-module-scripts": "^3.0.0"
+  },
+  "peerDependencies": {
+    "expo": "*"
+  }
+}
