@@ -17,7 +17,7 @@ import PitchNeedle from '../components/tuner/PitchNeedle';
 import AnimalGrid from '../components/tuner/AnimalGrid';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MIKE_SIZE = Math.min(SCREEN_WIDTH * 0.25, 120);
+const MIKE_SIZE = Math.min(SCREEN_WIDTH * 0.32, 150);
 
 export default function TunerScreen() {
   const { t } = useTranslation();
@@ -115,7 +115,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f8ff',
-    padding: SCREEN_WIDTH * 0.05,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    paddingTop: SCREEN_HEIGHT * 0.04,
+    paddingBottom: SCREEN_HEIGHT * 0.012,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     lineHeight: RFValue(20),
   },
   button: {
-    marginTop: SCREEN_HEIGHT * 0.006,
+    marginTop: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -9,7 +9,7 @@ import {
 import { useNativeMetronome } from '../hooks/useNativeMetronome';
 import TempoControl from '../components/metronome/TempoControl';
 import BeatVisualizer from '../components/metronome/BeatVisualizer';
-import { RFValue, RWValue, RHValue } from '../utils/responsive';
+import { RFValue, RWValue, RHValue, isTablet } from '../utils/responsive';
 
 export default function MetronomeScreen() {
   const {
@@ -71,27 +71,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF9E6',
-    padding: RWValue(16),
+    paddingHorizontal: RWValue(16),
+    paddingTop: RHValue(isTablet ? 28 : 24),
+    paddingBottom: 0,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
+    paddingBottom: RHValue(isTablet ? 0 : 0),
   },
   button: {
-    width: RWValue(140),
-    height: RWValue(140),
+    width: RWValue(isTablet ? 180 : 120),
+    height: RWValue(isTablet ? 180 : 120),
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginTop: RHValue(60),
+    marginTop: RHValue(isTablet ? 20 : 14),
+    marginBottom: 0,
   },
   drumImage: {
-    width: RWValue(140),
-    height: RWValue(140),
+    width: RWValue(isTablet ? 180 : 120),
+    height: RWValue(isTablet ? 180 : 120),
   },
   drumImagePlaying: {
-    width: RWValue(140),
-    height: RWValue(140),
-    marginTop: RHValue(-15),
+    width: RWValue(isTablet ? 180 : 120),
+    height: RWValue(isTablet ? 180 : 120),
+    marginTop: RHValue(isTablet ? -18 : -14),
   },
 });

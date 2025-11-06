@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import { RWValue } from '../../utils/responsive';
+import { RWValue, RHValue, isTablet } from '../../utils/responsive';
 
 interface BeatVisualizerProps {
   currentBeat: number; // 0 = 정지, 1-4 = 비트
@@ -214,19 +214,18 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: RWValue(10),
-    marginBottom: RWValue(20),
+    paddingVertical: RHValue(8),
+    marginBottom: RHValue(10),
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: RWValue(65),
   },
   animalContainer: {
-    width: RWValue(90),
-    height: RWValue(90),
-    marginHorizontal: RWValue(5),
+    width: RWValue(isTablet ? 120 : 85),
+    height: RWValue(isTablet ? 120 : 85),
+    marginHorizontal: RWValue(isTablet ? 8 : 5),
     justifyContent: 'center',
     alignItems: 'center',
   },

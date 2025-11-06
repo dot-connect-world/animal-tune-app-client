@@ -10,7 +10,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
-const ANIMAL_SIZE = Math.min(width * 0.24, height * 0.21);
+const isTablet = width >= 768;
+const ANIMAL_SIZE = isTablet
+  ? Math.min(width * 0.18, height * 0.16)  // iPad: 작게
+  : Math.min(width * 0.24, height * 0.21); // iPhone: 기존 크기
 
 const DOG_STAND = require('../../../assets/images/dog/stand-dog.png');
 const DOG_SLIDE = require('../../../assets/images/dog/slide-dog.png');

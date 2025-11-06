@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { RFValue, RWValue, RHValue } from '../../utils/responsive';
+import { RFValue, RWValue, RHValue, isTablet } from '../../utils/responsive';
 
 interface TempoControlProps {
   bpm: number;
@@ -111,30 +111,32 @@ export default function TempoControl({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingHorizontal: RWValue(16),
-    paddingVertical: RHValue(12),
+    paddingHorizontal: RWValue(isTablet ? 34 : 24),
+    paddingVertical: RHValue(isTablet ? 16 : 12),
     backgroundColor: '#FFFFFF',
-    borderRadius: RWValue(16),
+    borderRadius: RWValue(18),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    maxWidth: isTablet ? RWValue(500) : RWValue(340),
+    alignSelf: 'center',
   },
   bpmDisplay: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginBottom: RHValue(12),
+    marginBottom: RHValue(10),
   },
   bpmValue: {
-    fontSize: RFValue(56),
+    fontSize: RFValue(isTablet ? 54 : 48),
     fontWeight: 'bold',
     color: '#007AFF',
     letterSpacing: -2,
   },
   bpmUnit: {
-    fontSize: RFValue(20),
+    fontSize: RFValue(isTablet ? 20 : 18),
     color: '#999',
     marginLeft: RWValue(6),
     fontWeight: '600',
@@ -143,13 +145,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: RWValue(20),
-    marginTop: RHValue(8),
+    gap: RWValue(isTablet ? 22 : 20),
+    marginTop: RHValue(10),
   },
   button: {
-    width: RWValue(50),
-    height: RWValue(50),
-    borderRadius: RWValue(25),
+    width: RWValue(isTablet ? 66 : 60),
+    height: RWValue(isTablet ? 66 : 60),
+    borderRadius: RWValue(isTablet ? 33 : 30),
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -164,9 +166,10 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: RFValue(30),
+    fontSize: RFValue(isTablet ? 34 : 36),
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginTop: -2,
   },
   sliderContainer: {
     flexDirection: 'row',
@@ -175,11 +178,11 @@ const styles = StyleSheet.create({
   },
   slider: {
     flex: 1,
-    height: RHValue(40),
-    marginHorizontal: RWValue(8),
+    height: RHValue(isTablet ? 52 : 48),
+    marginHorizontal: RWValue(10),
   },
   sliderLabel: {
-    fontSize: RFValue(12),
+    fontSize: RFValue(isTablet ? 16 : 15),
     color: '#999',
     fontWeight: '600',
   },
@@ -190,7 +193,7 @@ const styles = StyleSheet.create({
   },
   presetButton: {
     flex: 1,
-    paddingVertical: RHValue(10),
+    paddingVertical: RHValue(isTablet ? 14 : 12),
     marginHorizontal: RWValue(3),
     backgroundColor: '#F0F0F0',
     borderRadius: RWValue(10),
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
   },
   presetText: {
-    fontSize: RFValue(15),
+    fontSize: RFValue(isTablet ? 18 : 18),
     fontWeight: '700',
     color: '#007AFF',
   },

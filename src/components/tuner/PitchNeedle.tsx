@@ -12,11 +12,12 @@ interface PitchNeedleProps {
 }
 
 const { width, height } = Dimensions.get('window');
-const GAUGE_WIDTH = width * 0.8;
-const GAUGE_HEIGHT = Math.min(height * 0.12, 60);
-const NEEDLE_WIDTH = Math.min(width * 0.015, 6);
-const NEEDLE_HEIGHT = GAUGE_HEIGHT * 0.5;
-const TICK_LABEL_SIZE = Math.min(width * 0.03, 12);
+const isTablet = width >= 768;
+const GAUGE_WIDTH = isTablet ? width * 0.9 : width * 0.86;
+const GAUGE_HEIGHT = isTablet ? Math.min(height * 0.18, 110) : Math.min(height * 0.14, 72);
+const NEEDLE_WIDTH = isTablet ? Math.min(width * 0.022, 12) : Math.min(width * 0.018, 8);
+const NEEDLE_HEIGHT = GAUGE_HEIGHT * 0.6;
+const TICK_LABEL_SIZE = isTablet ? Math.min(width * 0.04, 18) : Math.min(width * 0.034, 14);
 const MAX_CENTS = 50;
 
 export default function PitchNeedle({ cents }: PitchNeedleProps) {
@@ -114,14 +115,14 @@ export default function PitchNeedle({ cents }: PitchNeedleProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: height * 0.036,
+    marginVertical: height * 0.022,
     width: '100%',
   },
   gauge: {
     width: GAUGE_WIDTH,
     height: GAUGE_HEIGHT,
     backgroundColor: '#F5F5F5',
-    borderRadius: width * 0.03,
+    borderRadius: width * 0.04,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '90%',
-    bottom: height * 0.01,
+    width: '92%',
+    bottom: height * 0.012,
   },
   tickLabel: {
     fontSize: TICK_LABEL_SIZE,

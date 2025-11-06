@@ -62,7 +62,7 @@ export default function TabNavigator() {
                   {
                     backgroundColor: '#FFFFFF',
                     color: focused ? '#000000' : '#808080',
-                    fontSize: RFValue(13),
+                    fontSize: RFValue(15),
                     fontWeight: focused ? '900' : '600',
                     marginBottom: RHValue(4),
                     includeFontPadding: false,

@@ -4,9 +4,12 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { Note } from '../../constants/notes';
 
 const { width, height } = Dimensions.get('window');
-const NOTE_NAME_SIZE = Math.min(width * 0.22, height * 0.17);
+const isTablet = width >= 768;
+const NOTE_NAME_SIZE = isTablet
+  ? Math.min(width * 0.25, height * 0.19)  // iPad: 더 크게
+  : Math.min(width * 0.22, height * 0.17); // iPhone: 기존 크기
 const OCTAVE_SIZE = NOTE_NAME_SIZE * 0.5;
-const FREQUENCY_SIZE = RFValue(14);
+const FREQUENCY_SIZE = isTablet ? RFValue(16) : RFValue(14);
 
 interface PitchDisplayProps {
   note: Note | null;
@@ -37,8 +40,8 @@ export default function PitchDisplay({ note, frequency }: PitchDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: height * 0.012,
-    marginTop: height * 0.006,
+    marginVertical: height * 0.006,
+    marginTop: height * 0.003,
   },
   noteLabel: {
     fontSize: RFValue(14),
