@@ -31,15 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
-.env
-.env*.local
 
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# generated native build artifacts (keep source folders tracked)
 modules/**/android/build/
 modules/**/android/.gradle/
 modules/**/android/.cxx/
@@ -58,4 +54,3 @@ modules/**/ios/Pods/
 
 # android
 *.apk
-*.aab

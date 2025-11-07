@@ -1,5 +1,18 @@
 require('dotenv').config({ path: __dirname + '/.env' });
 
+const requireEnv = (key) => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`[config] Missing required environment variable: ${key}.`);
+  }
+  return value;
+};
+
+const admobAndroidAppId = requireEnv('ADMOB_ANDROID_APP_ID');
+const admobIosAppId = requireEnv('ADMOB_IOS_APP_ID');
+const admobAndroidBannerId = requireEnv('ADMOB_ANDROID_BANNER_ID');
+const admobIosBannerId = requireEnv('ADMOB_IOS_BANNER_ID');
+
 module.exports = {
   expo: {
     name: "Animal Tune",
@@ -25,8 +38,8 @@ module.exports = {
       [
         "react-native-google-mobile-ads",
         {
-          androidAppId: process.env.ADMOB_ANDROID_APP_ID,
-          iosAppId: process.env.ADMOB_IOS_APP_ID,
+          androidAppId: admobAndroidAppId,
+          iosAppId: admobIosAppId,
           userTrackingUsageDescription: "This identifier will be used to deliver personalized ads to you."
         }
       ],
@@ -44,6 +57,9 @@ module.exports = {
       adaptiveIcon: {
         foregroundImage: "./assets/dog-icon.png",
         backgroundColor: "#ffffff"
+      },
+      manifestPlaceholders: {
+        ADMOB_ANDROID_APP_ID: admobAndroidAppId,
       },
       permissions: [
         "android.permission.RECORD_AUDIO",
@@ -64,6 +80,12 @@ module.exports = {
     extra: {
       eas: {
         projectId: "5d73d682-c7d6-40d7-b226-0d84f30ff2a6"
+},
+      admob: {
+        androidAppId: admobAndroidAppId,
+        iosAppId: admobIosAppId,
+        androidBannerId: admobAndroidBannerId,
+        iosBannerId: admobIosBannerId,
       }
     }
   }

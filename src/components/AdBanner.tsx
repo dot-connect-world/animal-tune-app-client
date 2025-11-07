@@ -1,21 +1,43 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
-import { ADMOB_ANDROID_BANNER_ID, ADMOB_IOS_BANNER_ID } from '@env';
+import Constants from 'expo-constants';
 import { RHValue } from '../utils/responsive';
 
-// AdMob 광고 유닛 ID 설정 (환경변수 사용)
-const adUnitId = Platform.select({
-  ios: __DEV__ ? TestIds.BANNER : ADMOB_IOS_BANNER_ID,
-  android: __DEV__ ? TestIds.BANNER : ADMOB_ANDROID_BANNER_ID,
-}) || TestIds.BANNER;
+type AdMobExtra = {
+  androidBannerId?: string;
+  iosBannerId?: string;
+};
+
+type ConstantsWithManifest2 = typeof Constants & {
+  manifest2?: { extra?: Record<string, unknown> };
+};
+
+const getAdMobExtra = (): AdMobExtra => {
+  const constantsWithManifest2 = Constants as ConstantsWithManifest2;
+  const extra =
+    Constants.expoConfig?.extra ??
+    Constants.manifest?.extra ??
+    constantsWithManifest2.manifest2?.extra ??
+    {};
+
+  return (extra?.admob as AdMobExtra) ?? {};
+};
+
+const { androidBannerId, iosBannerId } = getAdMobExtra();
+
+const adUnitId =
+  Platform.select({
+    ios: __DEV__ ? TestIds.BANNER : iosBannerId,
+    android: __DEV__ ? TestIds.BANNER : androidBannerId,
+  }) || TestIds.BANNER;
 
 interface AdBannerProps {
   size?: BannerAdSize;
 }
 
 export default function AdBanner({ size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER }: AdBannerProps) {
-  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [isAdLoaded, setIsAdLoaded] = React.useState(false);
 
   // 광고가 로드되지 않았으면 아예 렌더링하지 않음
   if (!isAdLoaded) {
