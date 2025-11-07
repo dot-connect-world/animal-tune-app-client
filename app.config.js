@@ -17,7 +17,7 @@ module.exports = {
   expo: {
     name: "Animal Tune",
     slug: "animal-tune",
-    version: "1.0.1",
+    version: "1.0.2",
     orientation: "portrait",
     icon: "./assets/dog-icon.png",
     userInterfaceStyle: "light",
@@ -48,7 +48,7 @@ module.exports = {
     ios: {
       bundleIdentifier: "site.praytogether.AnimalTune",
       supportsTablet: true,
-      buildNumber: "2",
+      buildNumber: "3",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
@@ -67,7 +67,7 @@ module.exports = {
         "android.permission.INTERNET"
       ],
       package: "site.praytogether.AnimalTune",
-      versionCode: 2,
+      versionCode: 3,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false
     },
@@ -80,7 +80,7 @@ module.exports = {
     extra: {
       eas: {
         projectId: "5d73d682-c7d6-40d7-b226-0d84f30ff2a6"
-},
+      },
       admob: {
         androidAppId: admobAndroidAppId,
         iosAppId: admobIosAppId,
