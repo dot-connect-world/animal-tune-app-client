@@ -10,8 +10,13 @@ const requireEnv = (key) => {
 
 const admobAndroidAppId = requireEnv('ADMOB_ANDROID_APP_ID');
 const admobIosAppId = requireEnv('ADMOB_IOS_APP_ID');
-const admobAndroidBannerId = requireEnv('ADMOB_ANDROID_BANNER_ID');
-const admobIosBannerId = requireEnv('ADMOB_IOS_BANNER_ID');
+
+// BANNER_ID는 production 빌드에서만 필수
+const isProduction = process.env.EAS_BUILD_PROFILE === 'production';
+const admobAndroidBannerId = isProduction
+  ? requireEnv('ADMOB_ANDROID_BANNER_ID') :  '';
+const admobIosBannerId = isProduction
+  ? requireEnv('ADMOB_IOS_BANNER_ID') : '';
 
 module.exports = {
   expo: {
