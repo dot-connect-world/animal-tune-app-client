@@ -6,7 +6,7 @@ public class NativePitchDetectorModule: Module {
   private var isInitialized = false
   private var isRecording = false
 
-  private var minVolume: Double = -60.0
+  private var minVolume: Double = -80.0  // 데시벨 단위 (-60 ~ -40이 일반적)
   private var bufferSize: AVAudioFrameCount = 4096
   private var sampleRate: Double = 44100.0
 

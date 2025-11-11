@@ -183,7 +183,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
           // Pitchy 초기화 (악기 튜너 최적화 설정)
           const config: PitchyConfig = {
             bufferSize: 4096, // 긴 분석 창으로 배음/노이즈를 더 잘 걸러냄
-            minVolume: 30,   // 요청값: 매우 강한 신호만 감지 (감쇠는 더 빨리 끊길 수 있음)
+            minVolume: Platform.OS === 'ios' ? -80 : 30,   // iOS: 데시벨, Android: RMS 기반
           };
 
           await Pitchy.init(config);
@@ -232,7 +232,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         try {
           const config: PitchyConfig = {
             bufferSize: 4096,
-            minVolume: 30,
+            minVolume: Platform.OS === 'ios' ? -80 : 30,  // iOS: 데시벨, Android: RMS 기반
           };
           await Pitchy.init(config);
           isInitializedRef.current = true;
@@ -264,7 +264,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       try {
         const config: PitchyConfig = {
           bufferSize: 4096,
-          minVolume: 30,
+          minVolume: Platform.OS === 'ios' ? -80 : 30,  // iOS: 데시벨, Android: RMS 기반
         };
         await Pitchy.init(config);
       } catch (err) {
@@ -302,7 +302,6 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       // Pitchy 리스너 설정 (소리 지속 시간 기반 감지 로직)
       const handlePitch: PitchyEventCallback = (data) => {
         const now = Date.now();
-
         // 디버깅: pitch 값 확인
         if (data.pitch === -1) {
           if (silenceStartRef.current === null) {

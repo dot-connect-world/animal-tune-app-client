@@ -41,19 +41,25 @@ module.exports = {
       ],
       "expo-font",
       [
+        "expo-tracking-transparency",
+        {
+          userTrackingPermission: "This identifier will be used to deliver personalized ads to you."
+        }
+      ],
+      [
         "react-native-google-mobile-ads",
         {
           androidAppId: admobAndroidAppId,
-          iosAppId: admobIosAppId,
-          userTrackingUsageDescription: "This identifier will be used to deliver personalized ads to you."
+          iosAppId: admobIosAppId
         }
       ],
-      "./plugins/withNativePitchDetector"
+      "./plugins/withNativePitchDetector",
+      // "./plugins/withLocalizedInfoPlist" // 임시 비활성화
     ],
     ios: {
       bundleIdentifier: "site.praytogether.AnimalTune",
       supportsTablet: true,
-      buildNumber: "3",
+      buildNumber: "4",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
