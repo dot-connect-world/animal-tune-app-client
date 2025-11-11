@@ -35,6 +35,11 @@
       "ios": {
         "description": "Allow Animal Tune to access your microphone for guitar tuning."
       }
+    },
+    "tracking": {
+      "ios": {
+        "description": "이 식별자는 맞춤형 광고를 제공하는 데 사용됩니다."
+      }
     }
   },
   "errors": {
