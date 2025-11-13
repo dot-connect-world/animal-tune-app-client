@@ -18,11 +18,17 @@ const admobAndroidBannerId = isProduction
 const admobIosBannerId = isProduction
   ? requireEnv('ADMOB_IOS_BANNER_ID') : '';
 
+
+  const expoVersion = '1.0.3';
+  const iosVersion = '5';
+  const androidVersion = 4;
+
+
 module.exports = {
   expo: {
     name: "Animal Tune",
     slug: "animal-tune",
-    version: "1.0.2",
+    version: expoVersion,
     orientation: "portrait",
     icon: "./assets/dog-icon.png",
     userInterfaceStyle: "light",
@@ -59,7 +65,7 @@ module.exports = {
     ios: {
       bundleIdentifier: "site.praytogether.AnimalTune",
       supportsTablet: true,
-      buildNumber: "4",
+      buildNumber: iosVersion,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
@@ -78,7 +84,7 @@ module.exports = {
         "android.permission.INTERNET"
       ],
       package: "site.praytogether.AnimalTune",
-      versionCode: 3,
+      versionCode: androidVersion,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false
     },
