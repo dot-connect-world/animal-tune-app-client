@@ -60,5 +60,8 @@ modules/**/ios/Pods/
 *.apk
 *.aab
 
+# ios
+*.ipa
+
 # google play store
 credentials.json

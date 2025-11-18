@@ -12,9 +12,9 @@
     "web": "expo start --web",
     "clean": "npx expo prebuild --clean",
     "build-android-preview-local": "npx expo prebuild --clean && eas build --platform android --profile preview --local --clear-cache",
-    "build-android-prod-local": "npx expo prebuild --clean && eas build --platform android --profile production --local --clear-cache",
+    "build-android-prod-local": "EAS_BUILD_PROFILE=production npx expo prebuild --clean && EAS_BUILD_PROFILE=production eas build --platform android --profile production --local --clear-cache",
     "build-ios-production-cloud-submit": "npx expo prebuild --clean && eas build --platform ios --profile production --auto-submit --clear-cache",
-    "build-ios-production-cloud": "npx expo prebuild --clean && eas build --platform ios --profile production"
+    "build-ios-production-local": "EAS_BUILD_PROFILE=production npx expo prebuild --clean && EAS_BUILD_PROFILE=production eas build --platform ios --profile production --local --clear-cache"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

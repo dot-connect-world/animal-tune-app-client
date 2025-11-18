@@ -13,15 +13,23 @@ const admobIosAppId = requireEnv('ADMOB_IOS_APP_ID');
 
 // BANNER_ID는 production 빌드에서만 필수
 const isProduction = process.env.EAS_BUILD_PROFILE === 'production';
+
+console.log('🔍 [app.config.js] DEBUG:');
+console.log('  EAS_BUILD_PROFILE:', process.env.EAS_BUILD_PROFILE);
+console.log('  isProduction:', isProduction);
+
 const admobAndroidBannerId = isProduction
   ? requireEnv('ADMOB_ANDROID_BANNER_ID') :  '';
 const admobIosBannerId = isProduction
   ? requireEnv('ADMOB_IOS_BANNER_ID') : '';
 
+console.log('  admobIosBannerId:', admobIosBannerId);
+console.log('  admobAndroidBannerId:', admobAndroidBannerId);
 
-  const expoVersion = '1.0.3';
-  const iosVersion = '5';
-  const androidVersion = 4;
+
+  const expoVersion = '1.0.4';
+  const iosVersion = '6';
+  const androidVersion = 5;
 
 
 module.exports = {
