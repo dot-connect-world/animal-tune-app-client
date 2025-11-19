@@ -27,9 +27,9 @@ console.log('  admobIosBannerId:', admobIosBannerId);
 console.log('  admobAndroidBannerId:', admobAndroidBannerId);
 
 
-  const expoVersion = '1.0.4';
-  const iosVersion = '6';
-  const androidVersion = 5;
+  const expoVersion = '1.0.5';
+  const iosVersion = '7';
+  const androidVersion = 6;
 
 
 module.exports = {
