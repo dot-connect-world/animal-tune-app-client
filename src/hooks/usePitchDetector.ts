@@ -5,7 +5,6 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync
 } from 'expo-audio';
-import { PermissionStatus } from 'expo-modules-core';
 import Pitchy, { PitchyConfig, PitchyEventCallback } from '../modules/pitchModule';
 import { getClosestNote, resetCurrentNote, Note } from '../constants/notes';
 import i18n from '../i18n';
@@ -54,6 +53,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
   const startTimeRef = useRef<number>(0); // 녹음 시작 시간
   const lastFrequencyRef = useRef<number | null>(null); // 스무딩용 이전 주파수
   const recentFrequenciesRef = useRef<number[]>([]); // 급격한 튐 방지를 위한 최근 값 저장
+  const jitterWindowRef = useRef<number[]>([]); // raw 주파수 기반 지터 측정용 버퍼
 
   // 소리 지속 시간 추적
   const soundStartTimeRef = useRef<number | null>(null); // 소리가 시작된 시간
@@ -64,9 +64,20 @@ export function usePitchDetector(): UsePitchDetectorReturn {
   const SOUND_DURATION_THRESHOLD = 300; // 0.3초 이상 소리가 지속되어야 활성화
   const SILENCE_DURATION_THRESHOLD = 250; // 0.25초 동안 침묵 지속 시 리셋
   const STABILIZATION_TIME = 300; // 활성화 직후 0.3초 동안 초기 평균값으로 안정화
-  const SMOOTHING_FACTOR = 0.25; // 스무딩 강도 (0~1, 높을수록 빠른 반응)
   const MEDIAN_WINDOW_SIZE = 5; // 중앙값 필터 창 크기
   const LARGE_JUMP_RESET_THRESHOLD = 50; // 센트 기준으로 큰 점프 감지 (약 반음)
+  const JITTER_WINDOW_SIZE = 6; // 최근 raw 주파수로 지터 측정
+  const MAX_JITTER_CENTS = 35; // 너무 튀는 경우 업데이트 건너뜀
+  const HIGH_JITTER_THRESHOLD = 18; // 지터가 이 이상이면 스무딩 강화
+  const MIN_SMOOTHING_FACTOR = 0.12; // 지터가 심할 때 사용할 스무딩 팩터
+  const MAX_SMOOTHING_FACTOR = 0.32; // 안정적일 때 사용할 스무딩 팩터
+
+  const centsBetween = (a: number, b: number) => {
+    if (a <= 0 || b <= 0) {
+      return 0;
+    }
+    return Math.abs(1200 * Math.log2(a / b));
+  };
 
   // 권한 확인 (상태만 확인, 대화상자 띄우지 않음)
   const checkPermission = useCallback(async () => {
@@ -149,6 +160,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
             isActiveRef.current = false;
             silenceStartRef.current = null;
             recentFrequenciesRef.current = [];
+            jitterWindowRef.current = [];
             resetCurrentNote();
 
             setPitchData({
@@ -276,6 +288,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       startTimeRef.current = Date.now();
       lastFrequencyRef.current = null;
       recentFrequenciesRef.current = [];
+      jitterWindowRef.current = [];
 
       // 소리 지속 시간 추적 초기화
       soundStartTimeRef.current = null;
@@ -318,6 +331,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
               lastFrequencyRef.current = null;
               silenceStartRef.current = null;
               recentFrequenciesRef.current = [];
+              jitterWindowRef.current = [];
               resetCurrentNote();
 
               setPitchData({
@@ -356,6 +370,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
               recentFrequenciesRef.current = [];
               lastFrequencyRef.current = null;
               startTimeRef.current = now;
+              jitterWindowRef.current = [];
               resetCurrentNote();
             }
           }
@@ -388,6 +403,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
             frequencyBufferRef.current = [];
             lastFrequencyRef.current = null;
             recentFrequenciesRef.current = [];
+            jitterWindowRef.current = [];
           }
 
           // 2단계: 활성화된 상태 - 정상 피치 감지
@@ -395,6 +411,33 @@ export function usePitchDetector(): UsePitchDetectorReturn {
 
           let frequency: number;
           let isStabilizing = false;
+
+          const jitterWindow = jitterWindowRef.current;
+          jitterWindow.push(rawFrequency);
+          if (jitterWindow.length > JITTER_WINDOW_SIZE) {
+            jitterWindow.shift();
+          }
+
+          let jitterSpreadCents = 0;
+          if (jitterWindow.length >= 2) {
+            const maxFreq = Math.max(...jitterWindow);
+            const minFreq = Math.min(...jitterWindow);
+            jitterSpreadCents = centsBetween(maxFreq, minFreq);
+          }
+
+          if (jitterSpreadCents >= MAX_JITTER_CENTS) {
+            setPitchData((prev) => ({
+              ...prev,
+              isStabilizing: true,
+              isWaitingForSound: false,
+            }));
+            return;
+          }
+
+          const jitterRatio = Math.min(1, jitterSpreadCents / HIGH_JITTER_THRESHOLD);
+          const adaptiveSmoothingFactor =
+            MIN_SMOOTHING_FACTOR +
+            (MAX_SMOOTHING_FACTOR - MIN_SMOOTHING_FACTOR) * (1 - jitterRatio);
 
           // 2-1단계: 초기 0.3초 동안 평균 계산으로 안정화
           if (elapsedTime < STABILIZATION_TIME) {
@@ -411,8 +454,12 @@ export function usePitchDetector(): UsePitchDetectorReturn {
               // 안정화 완료 후 첫 값
               frequency = rawFrequency;
             } else {
-              // 지수 이동 평균 (Exponential Moving Average)
-              frequency = lastFrequencyRef.current * (1 - SMOOTHING_FACTOR) + rawFrequency * SMOOTHING_FACTOR;
+              // 지터 정도에 따라 스무딩 세기를 조정
+              const factor = Math.min(
+                Math.max(adaptiveSmoothingFactor, MIN_SMOOTHING_FACTOR),
+                MAX_SMOOTHING_FACTOR
+              );
+              frequency = lastFrequencyRef.current * (1 - factor) + rawFrequency * factor;
             }
           }
 
@@ -496,6 +543,7 @@ export function usePitchDetector(): UsePitchDetectorReturn {
       isActiveRef.current = false;
       silenceStartRef.current = null;
       recentFrequenciesRef.current = [];
+      jitterWindowRef.current = [];
 
       // Dead Zone을 위한 현재 음정 초기화
       resetCurrentNote();
