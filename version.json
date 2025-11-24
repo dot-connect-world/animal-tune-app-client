@@ -1,6 +1,6 @@
 {
-  "latestVersion": "1.0.8",
-  "minRequiredVersion": "1.0.0",
+  "latestVersion": "1.0.7",
+  "minRequiredVersion": "1.0.7",
   "updateMessage": "새로운 기능이 추가되었습니다!\n지금 업데이트하시겠습니까?",
   "forceUpdate": false,
   "storeUrl": {
