@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, AppState } from 'react-native';
+import { Platform } from 'react-native';
 import TabNavigator from './src/navigation/TabNavigator';
 import './src/i18n'; // i18n 초기화
 import mobileAds from 'react-native-google-mobile-ads';
@@ -17,13 +17,17 @@ export default function App() {
       try {
         // iOS에서 App Tracking Transparency (ATT) 권한 요청
         if (Platform.OS === 'ios') {
-          // 앱이 완전히 활성화될 때까지 대기 (App Store 심사를 위한 안전장치)
+          // 앱이 완전히 활성화될 때까지 대기
           await new Promise(resolve => setTimeout(resolve, 1000));
 
-          // 앱이 활성 상태인지 확인
-          if (AppState.currentState === 'active') {
-            const { status } = await TrackingTransparency.requestTrackingPermissionsAsync();
-            console.log('ATT Status:', status);
+          // ATT 권한 상태 확인
+          const { status: currentStatus } = await TrackingTransparency.getTrackingPermissionsAsync();
+          console.log('Current ATT Status:', currentStatus);
+
+          // 아직 권한을 물어보지 않은 경우에만 요청
+          if (currentStatus === 'undetermined') {
+            const { status: newStatus } = await TrackingTransparency.requestTrackingPermissionsAsync();
+            console.log('ATT Request Result:', newStatus);
           }
         }
 
