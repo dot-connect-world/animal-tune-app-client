@@ -50,5 +50,15 @@
     "permissionRevoked": "마이크 권한이 해제되어 튜너가 중지되었습니다.",
     "permissionRequestFailed": "권한 요청 실패: {{error}}",
     "settingsOpenFailed": "설정 열기 실패"
+  },
+  "update": {
+    "title": "업데이트 안내",
+    "forceTitle": "업데이트 필요",
+    "message": "새로운 기능이 추가되었습니다!\n지금 업데이트하시겠습니까?",
+    "forceMessage": "필수 업데이트가 필요합니다.\n앱을 계속 사용하려면 최신 버전으로 업데이트해 주세요.",
+    "currentVersion": "현재 버전",
+    "latestVersion": "최신 버전",
+    "updateButton": "업데이트",
+    "laterButton": "나중에"
   }
 }

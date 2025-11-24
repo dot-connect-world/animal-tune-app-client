@@ -50,5 +50,15 @@
     "permissionRevoked": "Microphone permission was revoked. Tuner stopped.",
     "permissionRequestFailed": "Failed to request permission: {{error}}",
     "settingsOpenFailed": "Failed to open settings"
+  },
+  "update": {
+    "title": "Update Available",
+    "forceTitle": "Update Required",
+    "message": "New features have been added!\nWould you like to update now?",
+    "forceMessage": "A required update is available.\nPlease update to the latest version to continue using the app.",
+    "currentVersion": "Current Version",
+    "latestVersion": "Latest Version",
+    "updateButton": "Update",
+    "laterButton": "Later"
   }
 }

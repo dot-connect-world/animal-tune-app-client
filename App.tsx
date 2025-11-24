@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
@@ -6,14 +6,19 @@ import TabNavigator from './src/navigation/TabNavigator';
 import './src/i18n'; // i18n 초기화
 import mobileAds from 'react-native-google-mobile-ads';
 import * as TrackingTransparency from 'expo-tracking-transparency';
+import UpdateModal from './src/components/UpdateModal';
+import { checkVersion, VersionCheckResult } from './src/utils/versionCheck';
 
 // Debug 메시지 비활성화
 import { LogBox } from 'react-native';
 LogBox.ignoreAllLogs();
 
 export default function App() {
+  const [updateInfo, setUpdateInfo] = useState<VersionCheckResult | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
   useEffect(() => {
-    const initializeAds = async () => {
+    const initialize = async () => {
       try {
         // iOS에서 App Tracking Transparency (ATT) 권한 요청
         if (Platform.OS === 'ios') {
@@ -34,18 +39,36 @@ export default function App() {
         // Google Mobile Ads SDK 초기화
         await mobileAds().initialize();
         console.log('AdMob SDK initialized successfully');
+
+        // 버전 체크
+        const versionCheckResult = await checkVersion();
+        if (versionCheckResult && versionCheckResult.needsUpdate) {
+          setUpdateInfo(versionCheckResult);
+          setShowUpdateModal(true);
+        }
       } catch (error) {
-        console.error('AdMob initialization failed:', error);
+        console.error('Initialization failed:', error);
       }
     };
 
-    initializeAds();
+    initialize();
   }, []);
 
   return (
-    <NavigationContainer>
-      <TabNavigator />
-      <StatusBar style="auto" />
-    </NavigationContainer>
+    <>
+      <NavigationContainer>
+        <TabNavigator />
+        <StatusBar style="auto" />
+      </NavigationContainer>
+
+      {updateInfo && (
+        <UpdateModal
+          visible={showUpdateModal}
+          forceUpdate={updateInfo.forceUpdate}
+          storeUrl={updateInfo.storeUrl}
+          onClose={() => setShowUpdateModal(false)}
+        />
+      )}
+    </>
   );
 }
