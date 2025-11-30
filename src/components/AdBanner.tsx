@@ -28,9 +28,23 @@ const { androidBannerId, iosBannerId } = getAdMobExtra();
 
 const adUnitId =
   Platform.select({
-    ios: __DEV__ ? TestIds.BANNER : iosBannerId,
-    android: __DEV__ ? TestIds.BANNER : androidBannerId,
+    ios: __DEV__ ? TestIds.BANNER : (iosBannerId || TestIds.BANNER),
+    android: __DEV__ ? TestIds.BANNER : (androidBannerId || TestIds.BANNER),
   }) || TestIds.BANNER;
+
+// 로그 추가 - 배너 ID 확인
+console.log('🎯 AdBanner Config:', {
+  platform: Platform.OS,
+  isDev: __DEV__,
+  iosBannerId,
+  androidBannerId,
+  selectedAdUnitId: adUnitId,
+});
+
+// 배너 ID가 없으면 경고
+if (!adUnitId || adUnitId === TestIds.BANNER) {
+  console.warn('⚠️ Using Test Ad Unit ID. Check if production banner IDs are properly configured.');
+}
 
 interface AdBannerProps {
   size?: BannerAdSize;

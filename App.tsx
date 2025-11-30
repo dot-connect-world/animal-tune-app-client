@@ -34,11 +34,15 @@ export default function App() {
             const { status: newStatus } = await TrackingTransparency.requestTrackingPermissionsAsync();
             console.log('ATT Request Result:', newStatus);
           }
-        }
 
-        // Google Mobile Ads SDK 초기화
-        await mobileAds().initialize();
-        console.log('AdMob SDK initialized successfully');
+          // ATT 권한 요청 후 AdMob SDK 초기화 (iOS에서만 순서 중요)
+          await mobileAds().initialize();
+          console.log('AdMob SDK initialized successfully (after ATT)');
+        } else {
+          // Android에서는 바로 AdMob SDK 초기화
+          await mobileAds().initialize();
+          console.log('AdMob SDK initialized successfully');
+        }
 
         // 버전 체크
         const versionCheckResult = await checkVersion();
