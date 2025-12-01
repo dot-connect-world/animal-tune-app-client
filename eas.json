@@ -31,12 +31,12 @@
         "simulator": false,
         "image": "latest"
       },// eas cloud -> eas.json env , local -> please remove eas.json env and use file .env
-      "env": {
-        "ADMOB_ANDROID_APP_ID": "${ADMOB_ANDROID_APP_ID}",
-        "ADMOB_IOS_APP_ID": "${ADMOB_IOS_APP_ID}",
-        "ADMOB_ANDROID_BANNER_ID": "${ADMOB_ANDROID_BANNER_ID}",
-        "ADMOB_IOS_BANNER_ID": "${ADMOB_IOS_BANNER_ID}"
-      }
+      // "env": {
+      //   "ADMOB_ANDROID_APP_ID": "${ADMOB_ANDROID_APP_ID}",
+      //   "ADMOB_IOS_APP_ID": "${ADMOB_IOS_APP_ID}",
+      //   "ADMOB_ANDROID_BANNER_ID": "${ADMOB_ANDROID_BANNER_ID}",
+      //   "ADMOB_IOS_BANNER_ID": "${ADMOB_IOS_BANNER_ID}"
+      // }
     }
   },
   "submit": {
