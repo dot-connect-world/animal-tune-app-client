@@ -2,6 +2,7 @@ import * as React from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Constants from 'expo-constants';
+import { ADMOB_ANDROID_BANNER_ID, ADMOB_IOS_BANNER_ID } from '@env';
 import { RHValue } from '../utils/responsive';
 
 type AdMobExtra = {
@@ -24,20 +25,24 @@ const getAdMobExtra = (): AdMobExtra => {
   return (extra?.admob as AdMobExtra) ?? {};
 };
 
-const { androidBannerId, iosBannerId } = getAdMobExtra();
+const { androidBannerId: manifestAndroidBannerId, iosBannerId: manifestIosBannerId } = getAdMobExtra();
+
+// expo-constants에서 extra가 비어 있는 bare/production 빌드를 대비해 .env 값을 폴백으로 사용
+const resolvedIosBannerId = manifestIosBannerId || ADMOB_IOS_BANNER_ID || '';
+const resolvedAndroidBannerId = manifestAndroidBannerId || ADMOB_ANDROID_BANNER_ID || '';
 
 const adUnitId =
   Platform.select({
-    ios: __DEV__ ? TestIds.BANNER : (iosBannerId || TestIds.BANNER),
-    android: __DEV__ ? TestIds.BANNER : (androidBannerId || TestIds.BANNER),
+    ios: __DEV__ ? TestIds.BANNER : (resolvedIosBannerId || TestIds.BANNER),
+    android: __DEV__ ? TestIds.BANNER : (resolvedAndroidBannerId || TestIds.BANNER),
   }) || TestIds.BANNER;
 
 // 로그 추가 - 배너 ID 확인
 console.log('🎯 AdBanner Config:', {
   platform: Platform.OS,
   isDev: __DEV__,
-  iosBannerId,
-  androidBannerId,
+  iosBannerId: resolvedIosBannerId,
+  androidBannerId: resolvedAndroidBannerId,
   selectedAdUnitId: adUnitId,
 });
 
