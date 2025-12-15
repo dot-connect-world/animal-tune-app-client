@@ -2,7 +2,6 @@ import * as React from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Constants from 'expo-constants';
-import { ADMOB_ANDROID_BANNER_ID, ADMOB_IOS_BANNER_ID } from '@env';
 import { RHValue } from '../utils/responsive';
 
 type AdMobExtra = {
@@ -27,9 +26,9 @@ const getAdMobExtra = (): AdMobExtra => {
 
 const { androidBannerId: manifestAndroidBannerId, iosBannerId: manifestIosBannerId } = getAdMobExtra();
 
-// expo-constants에서 extra가 비어 있는 bare/production 빌드를 대비해 .env 값을 폴백으로 사용
-const resolvedIosBannerId = manifestIosBannerId || ADMOB_IOS_BANNER_ID || '';
-const resolvedAndroidBannerId = manifestAndroidBannerId || ADMOB_ANDROID_BANNER_ID || '';
+// expo-constants에서만 Banner ID 가져오기 (app.config.js에서 주입됨)
+const resolvedIosBannerId = manifestIosBannerId || '';
+const resolvedAndroidBannerId = manifestAndroidBannerId || '';
 
 const adUnitId =
   Platform.select({
@@ -58,6 +57,20 @@ interface AdBannerProps {
 export default function AdBanner({ size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER }: AdBannerProps) {
   const [isAdLoaded, setIsAdLoaded] = React.useState(false);
 
+  React.useEffect(() => {
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.warn('🔥 AdBanner Component Mounted!');
+    console.warn('Platform:', Platform.OS);
+    console.warn('__DEV__:', __DEV__);
+    console.warn('manifestIosBannerId (from expo-constants):', manifestIosBannerId);
+    console.warn('manifestAndroidBannerId (from expo-constants):', manifestAndroidBannerId);
+    console.warn('resolvedIosBannerId:', resolvedIosBannerId);
+    console.warn('resolvedAndroidBannerId:', resolvedAndroidBannerId);
+    console.warn('selectedAdUnitId:', adUnitId);
+    console.warn('isTestId:', adUnitId === TestIds.BANNER);
+    console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  }, []);
+
   // 광고가 로드되지 않았으면 아예 렌더링하지 않음
   if (!isAdLoaded) {
     return (
@@ -69,11 +82,22 @@ export default function AdBanner({ size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER 
             requestNonPersonalizedAdsOnly: false,
           }}
           onAdLoaded={() => {
-            console.log('광고 로드 성공!');
+            console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.warn('✅✅✅ 광고 로드 성공! ✅✅✅');
+            console.warn('AdUnitId:', adUnitId);
+            console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             setIsAdLoaded(true);
           }}
           onAdFailedToLoad={(error) => {
-            console.log('광고 로드 실패:', error);
+            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.error('❌❌❌ 광고 로드 실패! ❌❌❌');
+            console.error('AdUnitId:', adUnitId);
+            console.error('Error:', error);
+            console.error('Error Message:', error?.message);
+            console.error('Error Code:', (error as any)?.code);
+            console.error('Error Domain:', (error as any)?.domain);
+            console.error('Full Error Object:', JSON.stringify(error, null, 2));
+            console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             // 광고 실패 시 컴포넌트 숨김 유지
           }}
         />
