@@ -306,10 +306,12 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         isWaitingForSound: true,
       });
 
-      // 오디오 모드 설정
+      // 오디오 모드 설정 (playAndRecord를 위한 설정)
+      // iOS: 메트로놈 재생과 튜너 녹음을 동시에 할 수 있도록 설정
       await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
+        shouldPlayInBackground: true,
       });
 
       // Pitchy 리스너 설정 (소리 지속 시간 기반 감지 로직)
@@ -527,8 +529,11 @@ export function usePitchDetector(): UsePitchDetectorReturn {
         subscriptionRef.current = null;
       }
 
+      // 오디오 모드 복원 (메트로놈이 재생 중일 수 있으므로 세션 유지)
       await setAudioModeAsync({
         allowsRecording: false,
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
       });
 
       setIsRecording(false);

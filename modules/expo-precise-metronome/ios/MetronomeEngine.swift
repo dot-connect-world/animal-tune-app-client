@@ -39,6 +39,17 @@ class MetronomeEngine {
     }
 
     private func setupAudioEngine() {
+        // Configure AVAudioSession for playback and recording simultaneously
+        // This allows metronome to play while tuner is recording
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setActive(true)
+            print("MetronomeEngine: AVAudioSession configured for playAndRecord")
+        } catch {
+            print("MetronomeEngine: Failed to configure AVAudioSession: \(error)")
+        }
+
         audioEngine = AVAudioEngine()
         playerNode = AVAudioPlayerNode()
 
