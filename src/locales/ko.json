@@ -25,6 +25,9 @@
       "allegro": "Allegro (빠름)",
       "presto": "Presto (매우 빠름)",
       "prestissimo": "Prestissimo (최고 속도)"
+    },
+    "beats": {
+      "label": "박자"
     }
   },
   "permissions": {

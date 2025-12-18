@@ -1,26 +1,24 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNativeMetronome } from '../hooks/useNativeMetronome';
 import TempoControl from '../components/metronome/TempoControl';
 import BeatVisualizer from '../components/metronome/BeatVisualizer';
-import { RFValue, RWValue, RHValue, isTablet } from '../utils/responsive';
+import BeatCountSelector from '../components/metronome/BeatCountSelector';
+import { RWValue, RHValue, isTablet } from '../utils/responsive';
 
 export default function MetronomeScreen() {
   const {
     bpm,
     isPlaying,
     currentBeat,
+    beatPulse,
+    beatsPerMeasure,
     setBpm,
     start,
     stop,
     increaseBpm,
     decreaseBpm,
+    setBeatsPerMeasure,
   } = useNativeMetronome();
 
   const handleToggle = () => {
@@ -35,7 +33,13 @@ export default function MetronomeScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         {/* 비트 시각화 */}
-        <BeatVisualizer currentBeat={currentBeat} isPlaying={isPlaying} bpm={bpm} />
+        <BeatVisualizer
+          currentBeat={currentBeat}
+          isPlaying={isPlaying}
+          bpm={bpm}
+          beatsPerMeasure={beatsPerMeasure}
+          beatPulse={beatPulse}
+        />
 
         {/* 템포 컨트롤 */}
         <TempoControl
@@ -44,6 +48,11 @@ export default function MetronomeScreen() {
           onIncrease={increaseBpm}
           onDecrease={decreaseBpm}
           disabled={isPlaying}
+        />
+
+        <BeatCountSelector
+          value={beatsPerMeasure}
+          onChange={setBeatsPerMeasure}
         />
 
         {/* 시작/중지 버튼 */}
@@ -71,31 +80,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF9E6',
-    paddingHorizontal: RWValue(16),
-    paddingTop: RHValue(isTablet ? 28 : 24),
-    paddingBottom: 0,
+    paddingHorizontal: RWValue(14),
+    paddingTop: RHValue(isTablet ? 22 : 18),
+    paddingBottom: RHValue(8),
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    paddingBottom: RHValue(isTablet ? 0 : 0),
+    justifyContent: 'space-between',
+    paddingBottom: RHValue(6),
   },
   button: {
-    width: RWValue(isTablet ? 180 : 120),
-    height: RWValue(isTablet ? 180 : 120),
+    width: RWValue(isTablet ? 160 : 104),
+    height: RWValue(isTablet ? 160 : 104),
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginTop: RHValue(isTablet ? 20 : 14),
-    marginBottom: 0,
+    marginTop: RHValue(isTablet ? 16 : 12),
+    marginBottom: RHValue(4),
   },
   drumImage: {
-    width: RWValue(isTablet ? 180 : 120),
-    height: RWValue(isTablet ? 180 : 120),
+    width: RWValue(isTablet ? 160 : 104),
+    height: RWValue(isTablet ? 160 : 104),
   },
   drumImagePlaying: {
-    width: RWValue(isTablet ? 180 : 120),
-    height: RWValue(isTablet ? 180 : 120),
-    marginTop: RHValue(isTablet ? -18 : -14),
+    width: RWValue(isTablet ? 160 : 104),
+    height: RWValue(isTablet ? 160 : 104),
+    marginTop: RHValue(isTablet ? -16 : -10),
   },
 });

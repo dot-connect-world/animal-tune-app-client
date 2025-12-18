@@ -11,21 +11,29 @@ interface UseNativeMetronomeReturn {
   bpm: number;
   isPlaying: boolean;
   currentBeat: number;
+  beatPulse: number;
+  beatsPerMeasure: number;
   setBpm: (bpm: number) => void;
   start: () => void;
   stop: () => void;
   increaseBpm: () => void;
   decreaseBpm: () => void;
+  setBeatsPerMeasure: (beats: number) => void;
 }
 
 const MIN_BPM = 40;
 const MAX_BPM = 240;
+const MIN_BEATS = 1;
+const MAX_BEATS = 8;
 
 export function useNativeMetronome(): UseNativeMetronomeReturn {
   const [bpm, setBpmState] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
+  const [beatPulse, setBeatPulse] = useState(0);
+  const [beatsPerMeasure, setBeatsPerMeasureState] = useState(4);
   const bpmRef = useRef(120);
+  const beatsPerMeasureRef = useRef(4);
   const lastBeatTimeRef = useRef<number>(0);
 
   // BPM 설정
@@ -55,7 +63,7 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
     try {
       PreciseMetronome.start({
         bpm: bpmRef.current,
-        beatsPerMeasure: 4,
+        beatsPerMeasure: beatsPerMeasureRef.current,
         accentFirstBeat: true,
       });
       setIsPlaying(true);
@@ -70,10 +78,33 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
       PreciseMetronome.stop();
       setIsPlaying(false);
       setCurrentBeat(0);
+      setBeatPulse(0);
     } catch (error) {
       console.error('Failed to stop metronome:', error);
     }
   }, []);
+
+  const setBeatsPerMeasure = useCallback((nextBeats: number) => {
+    const clampedBeats = Math.max(MIN_BEATS, Math.min(MAX_BEATS, nextBeats));
+    setBeatsPerMeasureState(clampedBeats);
+    beatsPerMeasureRef.current = clampedBeats;
+
+    if (!isPlaying) {
+      setCurrentBeat(0);
+      return;
+    }
+
+    try {
+      PreciseMetronome.stop();
+      PreciseMetronome.start({
+        bpm: bpmRef.current,
+        beatsPerMeasure: clampedBeats,
+        accentFirstBeat: true,
+      });
+    } catch (error) {
+      console.error('Failed to update beats per measure:', error);
+    }
+  }, [isPlaying]);
 
   // Beat 이벤트 리스너
   useEffect(() => {
@@ -83,6 +114,7 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
       lastBeatTimeRef.current = now;
 
       setCurrentBeat(event.beatNumber);
+      setBeatPulse((prev) => prev + 1);
 
       // 비트 간격 로그 (4→1 전환 시 특별 표시)
       const isFirstBeat = event.beatNumber === 1;
@@ -109,10 +141,13 @@ export function useNativeMetronome(): UseNativeMetronomeReturn {
     bpm,
     isPlaying,
     currentBeat,
+    beatPulse,
+    beatsPerMeasure,
     setBpm,
     start,
     stop,
     increaseBpm,
     decreaseBpm,
+    setBeatsPerMeasure,
   };
 }

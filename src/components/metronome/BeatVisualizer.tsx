@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import Animated, {
-  type SharedValue,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -11,200 +10,287 @@ import Animated, {
 import { RWValue, RHValue, isTablet } from '../../utils/responsive';
 
 interface BeatVisualizerProps {
-  currentBeat: number; // 0 = 정지, 1-4 = 비트
+  currentBeat: number; // 0 = 정지
   isPlaying: boolean;
-  bpm: number; // BPM 추가
+  bpm: number;
+  beatsPerMeasure: number;
+  beatPulse: number;
 }
 
-const ANIMAL_IMAGES = {
-  stand: [
-    require('../../../assets/images/dog/stand-dog.png'),
-    require('../../../assets/images/cat/stand-cat.png'),
-    require('../../../assets/images/turtule/stand-turtle-Photoroom.png'),
-    require('../../../assets/images/hemster/stand-hemster.png'),
-  ],
-  drum: [
-    require('../../../assets/images/dog/drum-dog.png'),
-    require('../../../assets/images/cat/drum-cat.png'),
-    require('../../../assets/images/turtule/drum-turtle-Photoroom.png'),
-    require('../../../assets/images/hemster/drum-hemster.png'),
-  ],
+type AnimalImage = {
+  stand: ReturnType<typeof require>;
+  drum: ReturnType<typeof require>;
 };
 
-export default function BeatVisualizer({ currentBeat, isPlaying, bpm }: BeatVisualizerProps) {
-  // 각 동물의 drum 상태를 State로 관리 (겹침 방지)
-  const [isDrumming1, setIsDrumming1] = useState(false);
-  const [isDrumming2, setIsDrumming2] = useState(false);
-  const [isDrumming3, setIsDrumming3] = useState(false);
-  const [isDrumming4, setIsDrumming4] = useState(false);
+const BASE_ANIMALS: AnimalImage[] = [
+  {
+    stand: require('../../../assets/images/dog/stand-dog.png'),
+    drum: require('../../../assets/images/dog/drum-dog.png'),
+  },
+  {
+    stand: require('../../../assets/images/cat/stand-cat.png'),
+    drum: require('../../../assets/images/cat/drum-cat.png'),
+  },
+  {
+    stand: require('../../../assets/images/turtule/stand-turtle-Photoroom.png'),
+    drum: require('../../../assets/images/turtule/drum-turtle-Photoroom.png'),
+  },
+  {
+    stand: require('../../../assets/images/hemster/stand-hemster.png'),
+    drum: require('../../../assets/images/hemster/drum-hemster.png'),
+  },
+];
 
-  const scale1 = useSharedValue(1);
-  const scale2 = useSharedValue(1);
-  const scale3 = useSharedValue(1);
-  const scale4 = useSharedValue(1);
+const MAX_BEATS = 8;
 
-  const opacity1 = useSharedValue(0.6);
-  const opacity2 = useSharedValue(0.6);
-  const opacity3 = useSharedValue(0.6);
-  const opacity4 = useSharedValue(0.6);
+export default function BeatVisualizer({
+  currentBeat,
+  isPlaying,
+  bpm,
+  beatsPerMeasure,
+  beatPulse,
+}: BeatVisualizerProps) {
+  const [drummingStates, setDrummingStates] = useState<boolean[]>(
+    () => Array(MAX_BEATS).fill(false)
+  );
 
-  // BPM에 따른 애니메이션 duration 계산
-  // 비트 간격 = 60000ms / bpm (1분을 ms로 변환하고 bpm으로 나눔)
-  // 애니메이션은 비트 간격의 70%로 설정하여 겹치지 않도록
+  // Shared values for up to 8 cells
+  const scaleValue1 = useSharedValue(1);
+  const scaleValue2 = useSharedValue(1);
+  const scaleValue3 = useSharedValue(1);
+  const scaleValue4 = useSharedValue(1);
+  const scaleValue5 = useSharedValue(1);
+  const scaleValue6 = useSharedValue(1);
+  const scaleValue7 = useSharedValue(1);
+  const scaleValue8 = useSharedValue(1);
+
+  const opacityValue1 = useSharedValue(0.6);
+  const opacityValue2 = useSharedValue(0.6);
+  const opacityValue3 = useSharedValue(0.6);
+  const opacityValue4 = useSharedValue(0.6);
+  const opacityValue5 = useSharedValue(0.6);
+  const opacityValue6 = useSharedValue(0.6);
+  const opacityValue7 = useSharedValue(0.6);
+  const opacityValue8 = useSharedValue(0.6);
+
+  const animatedStyle1 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue1.value }],
+    opacity: opacityValue1.value,
+  }));
+  const animatedStyle2 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue2.value }],
+    opacity: opacityValue2.value,
+  }));
+  const animatedStyle3 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue3.value }],
+    opacity: opacityValue3.value,
+  }));
+  const animatedStyle4 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue4.value }],
+    opacity: opacityValue4.value,
+  }));
+  const animatedStyle5 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue5.value }],
+    opacity: opacityValue5.value,
+  }));
+  const animatedStyle6 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue6.value }],
+    opacity: opacityValue6.value,
+  }));
+  const animatedStyle7 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue7.value }],
+    opacity: opacityValue7.value,
+  }));
+  const animatedStyle8 = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue8.value }],
+    opacity: opacityValue8.value,
+  }));
+
+  const scaleValues = useMemo(
+    () => [
+      scaleValue1,
+      scaleValue2,
+      scaleValue3,
+      scaleValue4,
+      scaleValue5,
+      scaleValue6,
+      scaleValue7,
+      scaleValue8,
+    ],
+    [
+      scaleValue1,
+      scaleValue2,
+      scaleValue3,
+      scaleValue4,
+      scaleValue5,
+      scaleValue6,
+      scaleValue7,
+      scaleValue8,
+    ]
+  );
+
+  const opacityValues = useMemo(
+    () => [
+      opacityValue1,
+      opacityValue2,
+      opacityValue3,
+      opacityValue4,
+      opacityValue5,
+      opacityValue6,
+      opacityValue7,
+      opacityValue8,
+    ],
+    [
+      opacityValue1,
+      opacityValue2,
+      opacityValue3,
+      opacityValue4,
+      opacityValue5,
+      opacityValue6,
+      opacityValue7,
+      opacityValue8,
+    ]
+  );
+
+  const animatedStyles = useMemo(
+    () => [
+      animatedStyle1,
+      animatedStyle2,
+      animatedStyle3,
+      animatedStyle4,
+      animatedStyle5,
+      animatedStyle6,
+      animatedStyle7,
+      animatedStyle8,
+    ],
+    [
+      animatedStyle1,
+      animatedStyle2,
+      animatedStyle3,
+      animatedStyle4,
+      animatedStyle5,
+      animatedStyle6,
+      animatedStyle7,
+      animatedStyle8,
+    ]
+  );
+
+  // BPM에 따른 duration 계산
   const beatInterval = 60000 / bpm;
-  const animDuration = Math.min(beatInterval * 0.7, 250); // 최대 250ms
-  const hitDuration = Math.min(animDuration * 0.4, 80); // 타격 시간
-  const fadeDuration = Math.min(animDuration * 0.6, 150); // 페이드 시간
+  const animDuration = Math.min(beatInterval * 0.7, 250);
+  const hitDuration = Math.min(animDuration * 0.4, 90);
+  const fadeDuration = Math.min(animDuration * 0.6, 150);
+
+  const resetVisuals = useCallback(() => {
+    setDrummingStates((prev) => {
+      if (prev.every((state) => !state)) {
+        return prev;
+      }
+      return Array(MAX_BEATS).fill(false);
+    });
+
+    scaleValues.forEach((scale) => {
+      scale.value = withTiming(1, { duration: 200 });
+    });
+    opacityValues.forEach((opacity) => {
+      opacity.value = withTiming(0.6, { duration: 200 });
+    });
+  }, [opacityValues, scaleValues]);
 
   useEffect(() => {
     if (!isPlaying || currentBeat === 0) {
-      // 정지 상태 - 모두 stand 이미지로
-      setIsDrumming1(false);
-      setIsDrumming2(false);
-      setIsDrumming3(false);
-      setIsDrumming4(false);
-
-      scale1.value = withTiming(1, { duration: 200 });
-      scale2.value = withTiming(1, { duration: 200 });
-      scale3.value = withTiming(1, { duration: 200 });
-      scale4.value = withTiming(1, { duration: 200 });
-
-      opacity1.value = withTiming(0.6, { duration: 200 });
-      opacity2.value = withTiming(0.6, { duration: 200 });
-      opacity3.value = withTiming(0.6, { duration: 200 });
-      opacity4.value = withTiming(0.6, { duration: 200 });
+      resetVisuals();
       return;
     }
 
-    // 새 비트 시작 시 모든 이전 애니메이션을 즉시 리셋
-    const resetOthers = (except: number) => {
-      if (except !== 1) {
-        setIsDrumming1(false);
-        scale1.value = 1;
-        opacity1.value = 0.6;
+    const activeBeats = Math.max(1, Math.min(beatsPerMeasure, MAX_BEATS));
+    const normalizedBeat = ((currentBeat - 1) % activeBeats + activeBeats) % activeBeats;
+    const targetIndex = Math.min(normalizedBeat, MAX_BEATS - 1);
+
+    scaleValues.forEach((scale, index) => {
+      if (index === targetIndex) {
+        scale.value = withSequence(
+          withTiming(1.2, { duration: hitDuration, easing: Easing.out(Easing.quad) }),
+          withTiming(1, { duration: fadeDuration, easing: Easing.in(Easing.quad) })
+        );
+        opacityValues[index].value = withSequence(
+          withTiming(1, { duration: hitDuration }),
+          withTiming(0.6, { duration: fadeDuration })
+        );
+      } else {
+        scale.value = withTiming(1, { duration: 120 });
+        opacityValues[index].value = withTiming(0.6, { duration: 120 });
       }
-      if (except !== 2) {
-        setIsDrumming2(false);
-        scale2.value = 1;
-        opacity2.value = 0.6;
-      }
-      if (except !== 3) {
-        setIsDrumming3(false);
-        scale3.value = 1;
-        opacity3.value = 0.6;
-      }
-      if (except !== 4) {
-        setIsDrumming4(false);
-        scale4.value = 1;
-        opacity4.value = 0.6;
-      }
+    });
+
+    setDrummingStates((prev) => {
+      const next = prev.map((_, idx) => idx === targetIndex);
+      return next;
+    });
+
+    const timeout = setTimeout(() => {
+      setDrummingStates((prev) => {
+        if (!prev[targetIndex]) {
+          return prev;
+        }
+        const next = [...prev];
+        next[targetIndex] = false;
+        return next;
+      });
+    }, hitDuration + fadeDuration);
+
+    return () => {
+      clearTimeout(timeout);
     };
+  }, [
+    beatPulse,
+    beatsPerMeasure,
+    currentBeat,
+    fadeDuration,
+    hitDuration,
+    isPlaying,
+    opacityValues,
+    scaleValues,
+    resetVisuals,
+  ]);
 
-    // 비트 애니메이션 (모두 UI 스레드에서 동기 처리)
-    const animateBeat = (
-      beatNum: number,
-      setDrumming: (value: boolean) => void,
-      scaleValue: SharedValue<number>,
-      opacityValue: SharedValue<number>
-    ) => {
-      // 다른 동물들의 애니메이션 즉시 중단
-      resetOthers(beatNum);
+  const cellsToRender = useMemo(
+    () => Math.min(Math.max(1, beatsPerMeasure), MAX_BEATS),
+    [beatsPerMeasure]
+  );
 
-      // drum 이미지 즉시 표시
-      setDrumming(true);
+  const animals = useMemo(() => {
+    return Array.from({ length: cellsToRender }, (_, index) => {
+      const animal = BASE_ANIMALS[index % BASE_ANIMALS.length];
+      return {
+        ...animal,
+        index,
+      };
+    });
+  }, [cellsToRender]);
 
-      // withSequence를 사용하여 순차적 애니메이션 보장
-      scaleValue.value = withSequence(
-        withTiming(1.2, { duration: hitDuration, easing: Easing.out(Easing.quad) }),
-        withTiming(1, { duration: fadeDuration, easing: Easing.in(Easing.quad) })
-      );
-
-      opacityValue.value = withSequence(
-        withTiming(1, { duration: hitDuration }),
-        withTiming(0.6, { duration: fadeDuration })
-      );
-
-      // drum 이미지를 stand로 복귀
-      setTimeout(() => {
-        setDrumming(false);
-      }, hitDuration + fadeDuration);
-    };
-
-    // 현재 비트에 따라 애니메이션
-    switch (currentBeat) {
-      case 1:
-        animateBeat(1, setIsDrumming1, scale1, opacity1);
-        break;
-      case 2:
-        animateBeat(2, setIsDrumming2, scale2, opacity2);
-        break;
-      case 3:
-        animateBeat(3, setIsDrumming3, scale3, opacity3);
-        break;
-      case 4:
-        animateBeat(4, setIsDrumming4, scale4, opacity4);
-        break;
-    }
-  }, [currentBeat, isPlaying, hitDuration, fadeDuration]);
-
-  const animatedContainerStyle1 = useAnimatedStyle(() => ({
-    transform: [{ scale: scale1.value }],
-    opacity: opacity1.value,
-  }));
-
-  const animatedContainerStyle2 = useAnimatedStyle(() => ({
-    transform: [{ scale: scale2.value }],
-    opacity: opacity2.value,
-  }));
-
-  const animatedContainerStyle3 = useAnimatedStyle(() => ({
-    transform: [{ scale: scale3.value }],
-    opacity: opacity3.value,
-  }));
-
-  const animatedContainerStyle4 = useAnimatedStyle(() => ({
-    transform: [{ scale: scale4.value }],
-    opacity: opacity4.value,
-  }));
+  const hasUpperRow = cellsToRender > 4;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
-        {/* 동물 1 */}
-        <Animated.View style={[styles.animalContainer, animatedContainerStyle1]}>
-          <Image
-            source={isDrumming1 ? ANIMAL_IMAGES.drum[0] : ANIMAL_IMAGES.stand[0]}
-            style={styles.animalImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
-
-        {/* 동물 2 */}
-        <Animated.View style={[styles.animalContainer, animatedContainerStyle2]}>
-          <Image
-            source={isDrumming2 ? ANIMAL_IMAGES.drum[1] : ANIMAL_IMAGES.stand[1]}
-            style={styles.animalImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
-
-        {/* 동물 3 */}
-        <Animated.View style={[styles.animalContainer, animatedContainerStyle3]}>
-          <Image
-            source={isDrumming3 ? ANIMAL_IMAGES.drum[2] : ANIMAL_IMAGES.stand[2]}
-            style={styles.animalImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
-
-        {/* 동물 4 */}
-        <Animated.View style={[styles.animalContainer, animatedContainerStyle4]}>
-          <Image
-            source={isDrumming4 ? ANIMAL_IMAGES.drum[3] : ANIMAL_IMAGES.stand[3]}
-            style={styles.animalImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
+    <View
+      style={[
+        styles.container,
+        hasUpperRow ? styles.containerMultiRow : styles.containerSingleRow,
+      ]}
+    >
+      <View style={[styles.grid, hasUpperRow && styles.gridMultiRow]}>
+        {animals.map(({ stand, drum, index }) => (
+          <Animated.View
+            key={`beat-animal-${index}`}
+            style={[styles.animalContainer, animatedStyles[index]]}
+          >
+            <Image
+              source={drummingStates[index] ? drum : stand}
+              style={styles.animalImage}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        ))}
       </View>
     </View>
   );
@@ -212,20 +298,35 @@ export default function BeatVisualizer({ currentBeat, isPlaying, bpm }: BeatVisu
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: RHValue(8),
-    marginBottom: RHValue(10),
+    paddingVertical: RHValue(6),
+    marginBottom: RHValue(4),
+    height: RWValue(isTablet ? 360 : 220),
   },
-  row: {
+  containerSingleRow: {
+    justifyContent: 'center',
+  },
+  containerMultiRow: {
+    justifyContent: 'flex-start',
+  },
+  grid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: RWValue(6),
+  },
+  gridMultiRow: {
+    paddingTop: RHValue(4),
   },
   animalContainer: {
-    width: RWValue(isTablet ? 120 : 85),
-    height: RWValue(isTablet ? 120 : 85),
-    marginHorizontal: RWValue(isTablet ? 8 : 5),
+    width: '25%',
+    maxWidth: RWValue(isTablet ? 120 : 88),
+    aspectRatio: 1,
+    paddingHorizontal: RWValue(4),
+    paddingVertical: RHValue(4),
     justifyContent: 'center',
     alignItems: 'center',
   },

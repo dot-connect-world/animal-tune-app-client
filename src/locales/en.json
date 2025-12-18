@@ -25,6 +25,9 @@
       "allegro": "Allegro (Fast)",
       "presto": "Presto (Very Fast)",
       "prestissimo": "Prestissimo (Extremely Fast)"
+    },
+    "beats": {
+      "label": "Beats per Measure"
     }
   },
   "permissions": {
