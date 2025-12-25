@@ -1,10 +1,10 @@
 {
   "latestVersion": "1.0.7",
   "minRequiredVersion": "1.0.7",
-  "updateMessage": "새로운 기능이 추가되었습니다!\n지금 업데이트하시겠습니까?",
+  "updateMessage": "New features available!\nUpdate now?",
   "forceUpdate": false,
   "storeUrl": {
     "ios": "https://apps.apple.com/kr/app/animal-tune/id6754918378",
-    "android": "https://play.google.com/store/apps/details?id=com.animaltune.app"
+    "android": "https://play.google.com/store/apps/details?id=site.praytogether.AnimalTune&pcampaignid=web_share"
   }
 }
